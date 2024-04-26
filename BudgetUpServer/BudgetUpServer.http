@@ -1,0 +1,6 @@
+@BudgetUpServer_HostAddress = http://localhost:5262
+
+GET {{BudgetUpServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
