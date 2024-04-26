@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BudgetUpServer.Entity
 {
+    [Table("TransactionCategory")]
     public class TransactionCategory
     {
         [Key]
