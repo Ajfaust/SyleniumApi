@@ -3,11 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BudgetUpServer.Entity
 {
-    public class Spreadsheet
+    public class Profile
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int SpreadsheetId { get; set; }
+        public int ProfileId { get; set; }
 
         #region Transaction Relation
 

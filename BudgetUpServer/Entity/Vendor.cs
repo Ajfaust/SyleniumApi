@@ -17,8 +17,8 @@ namespace BudgetUpServer.Entity
         [Required]
         public string VendorName { get; set; }
 
-        public int SpreadsheetId { get; set; }
-        public virtual Spreadsheet Spreadsheet { get; set; }
+        public int ProfileId { get; set; }
+        public virtual Profile Profile { get; set; }
 
         public virtual ICollection<Transaction> Transactions { get; } = new List<Transaction>();
     }

@@ -5,7 +5,7 @@ namespace BudgetUpServer.Contexts
 {
     public class BudgetContext : DbContext
     {
-        public DbSet<Spreadsheet> Spreadsheets { get; set; }
+        public DbSet<Profile> Profiles { get; set; }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<AccountType> AccountTypes { get; set; }
         public DbSet<AccountCategory> AccountCategories { get; set; }

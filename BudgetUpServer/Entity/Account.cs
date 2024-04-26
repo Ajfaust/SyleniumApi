@@ -12,13 +12,13 @@ namespace BudgetUpServer.Entity
         [Required]
         public string AccountName { get; set; }
 
-        #region Spreadsheet Relation
+        #region Profile Relation
 
-        public int SpreadsheetId { get; set; }
+        public int ProfileId { get; set; }
 
-        public virtual Profile Spreadsheet { get; set; }
+        public virtual Profile Profile { get; set; }
 
-        #endregion Spreadsheet Relation
+        #endregion Profile Relation
 
         #region AccountType Relation
 

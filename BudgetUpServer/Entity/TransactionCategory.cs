@@ -22,12 +22,12 @@ namespace BudgetUpServer.Entity
 
         #endregion Parent-Child Relation
 
-        #region Spreadsheet Relation
+        #region Profile Relation
 
-        public int SpreadsheetId { get; set; }
-        public virtual Spreadsheet Spreadsheet { get; set; }
+        public int ProfileId { get; set; }
+        public virtual Profile Profile { get; set; }
 
-        #endregion Spreadsheet Relation
+        #endregion Profile Relation
 
         #region Transaction Relation
 

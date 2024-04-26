@@ -12,47 +12,47 @@ namespace BudgetUpServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SpreadsheetsController : ControllerBase
+    public class ProfilesController : ControllerBase
     {
         private readonly BudgetContext _context;
 
-        public SpreadsheetsController(BudgetContext context)
+        public ProfilesController(BudgetContext context)
         {
             _context = context;
         }
 
-        // GET: api/Spreadsheets
+        // GET: api/Profiles
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Spreadsheet>>> GetSpreadsheets()
+        public async Task<ActionResult<IEnumerable<Profile>>> GetProfiles()
         {
-            return await _context.Spreadsheets.ToListAsync();
+            return await _context.Profiles.ToListAsync();
         }
 
-        // GET: api/Spreadsheets/5
+        // GET: api/Profiles/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Spreadsheet>> GetSpreadsheet(int id)
+        public async Task<ActionResult<Profile>> GetProfile(int id)
         {
-            var spreadsheet = await _context.Spreadsheets.FindAsync(id);
+            var profile = await _context.Profiles.FindAsync(id);
 
-            if (spreadsheet == null)
+            if (profile == null)
             {
                 return NotFound();
             }
 
-            return spreadsheet;
+            return profile;
         }
 
-        // PUT: api/Spreadsheets/5
+        // PUT: api/Profiles/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutSpreadsheet(int id, Spreadsheet spreadsheet)
+        public async Task<IActionResult> PutProfile(int id, Profile profile)
         {
-            if (id != spreadsheet.SpreadsheetId)
+            if (id != profile.ProfileId)
             {
                 return BadRequest();
             }
 
-            _context.Entry(spreadsheet).State = EntityState.Modified;
+            _context.Entry(profile).State = EntityState.Modified;
 
             try
             {
@@ -60,7 +60,7 @@ namespace BudgetUpServer.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!SpreadsheetExists(id))
+                if (!ProfileExists(id))
                 {
                     return NotFound();
                 }
@@ -73,36 +73,36 @@ namespace BudgetUpServer.Controllers
             return NoContent();
         }
 
-        // POST: api/Spreadsheets
+        // POST: api/Profiles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Spreadsheet>> PostSpreadsheet(Spreadsheet spreadsheet)
+        public async Task<ActionResult<Profile>> PostProfile(Profile profile)
         {
-            _context.Spreadsheets.Add(spreadsheet);
+            _context.Profiles.Add(profile);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSpreadsheet", new { id = spreadsheet.SpreadsheetId }, spreadsheet);
+            return CreatedAtAction("GetProfile", new { id = profile.ProfileId }, profile);
         }
 
-        // DELETE: api/Spreadsheets/5
+        // DELETE: api/Profiles/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteSpreadsheet(int id)
+        public async Task<IActionResult> DeleteProfile(int id)
         {
-            var spreadsheet = await _context.Spreadsheets.FindAsync(id);
-            if (spreadsheet == null)
+            var profile = await _context.Profiles.FindAsync(id);
+            if (profile == null)
             {
                 return NotFound();
             }
 
-            _context.Spreadsheets.Remove(spreadsheet);
+            _context.Profiles.Remove(profile);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool SpreadsheetExists(int id)
+        private bool ProfileExists(int id)
         {
-            return _context.Spreadsheets.Any(e => e.SpreadsheetId == id);
+            return _context.Profiles.Any(e => e.ProfileId == id);
         }
     }
 }
