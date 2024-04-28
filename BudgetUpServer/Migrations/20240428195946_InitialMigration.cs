@@ -4,6 +4,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace BudgetUpServer.Migrations
 {
     /// <inheritdoc />
@@ -13,47 +15,48 @@ namespace BudgetUpServer.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "AccountCategory",
+                name: "FinancialCategory",
                 columns: table => new
                 {
-                    AccountCategoryId = table.Column<int>(type: "integer", nullable: false)
+                    FinancialCategoryId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    AccountCategoryName = table.Column<string>(type: "text", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AccountCategory", x => x.AccountCategoryId);
+                    table.PrimaryKey("PK_FinancialCategory", x => x.FinancialCategoryId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Profile",
+                name: "Portfolio",
                 columns: table => new
                 {
-                    ProfileId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
+                    PortfolioId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Profile", x => x.ProfileId);
+                    table.PrimaryKey("PK_Portfolio", x => x.PortfolioId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "AccountType",
+                name: "FinancialAccountType",
                 columns: table => new
                 {
-                    AccountTypeId = table.Column<int>(type: "integer", nullable: false)
+                    FinancialAccountTypeId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    AccountTypeName = table.Column<string>(type: "text", nullable: false),
-                    AccountCategoryId = table.Column<int>(type: "integer", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    FinancialCategoryId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AccountType", x => x.AccountTypeId);
+                    table.PrimaryKey("PK_FinancialAccountType", x => x.FinancialAccountTypeId);
                     table.ForeignKey(
-                        name: "FK_AccountType_AccountCategory_AccountCategoryId",
-                        column: x => x.AccountCategoryId,
-                        principalTable: "AccountCategory",
-                        principalColumn: "AccountCategoryId",
+                        name: "FK_FinancialAccountType_FinancialCategory_FinancialCategoryId",
+                        column: x => x.FinancialCategoryId,
+                        principalTable: "FinancialCategory",
+                        principalColumn: "FinancialCategoryId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -63,22 +66,23 @@ namespace BudgetUpServer.Migrations
                 {
                     TransactionCategoryId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    TransactionCategoryName = table.Column<string>(type: "text", nullable: false),
-                    ParentTransactionCategoryId = table.Column<int>(type: "integer", nullable: true),
-                    ProfileId = table.Column<int>(type: "integer", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    ParentId = table.Column<int>(type: "integer", nullable: true),
+                    ParentCategoryTransactionCategoryId = table.Column<int>(type: "integer", nullable: true),
+                    PortfolioId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TransactionCategory", x => x.TransactionCategoryId);
                     table.ForeignKey(
-                        name: "FK_TransactionCategory_Profile_ProfileId",
-                        column: x => x.ProfileId,
-                        principalTable: "Profile",
-                        principalColumn: "ProfileId",
+                        name: "FK_TransactionCategory_Portfolio_PortfolioId",
+                        column: x => x.PortfolioId,
+                        principalTable: "Portfolio",
+                        principalColumn: "PortfolioId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_TransactionCategory_TransactionCategory_ParentTransactionCa~",
-                        column: x => x.ParentTransactionCategoryId,
+                        name: "FK_TransactionCategory_TransactionCategory_ParentCategoryTrans~",
+                        column: x => x.ParentCategoryTransactionCategoryId,
                         principalTable: "TransactionCategory",
                         principalColumn: "TransactionCategoryId");
                 });
@@ -89,44 +93,44 @@ namespace BudgetUpServer.Migrations
                 {
                     VendorId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    VendorName = table.Column<string>(type: "text", nullable: false),
-                    ProfileId = table.Column<int>(type: "integer", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    PortfolioId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Vendor", x => x.VendorId);
                     table.ForeignKey(
-                        name: "FK_Vendor_Profile_ProfileId",
-                        column: x => x.ProfileId,
-                        principalTable: "Profile",
-                        principalColumn: "ProfileId",
+                        name: "FK_Vendor_Portfolio_PortfolioId",
+                        column: x => x.PortfolioId,
+                        principalTable: "Portfolio",
+                        principalColumn: "PortfolioId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Account",
+                name: "FinancialAccount",
                 columns: table => new
                 {
-                    AccountId = table.Column<int>(type: "integer", nullable: false)
+                    FinancialAccountId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    AccountName = table.Column<string>(type: "text", nullable: false),
-                    ProfileId = table.Column<int>(type: "integer", nullable: false),
-                    AccountTypeId = table.Column<int>(type: "integer", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    PortfolioId = table.Column<int>(type: "integer", nullable: false),
+                    FinancialAccountTypeId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Account", x => x.AccountId);
+                    table.PrimaryKey("PK_FinancialAccount", x => x.FinancialAccountId);
                     table.ForeignKey(
-                        name: "FK_Account_AccountType_AccountTypeId",
-                        column: x => x.AccountTypeId,
-                        principalTable: "AccountType",
-                        principalColumn: "AccountTypeId",
+                        name: "FK_FinancialAccount_FinancialAccountType_FinancialAccountTypeId",
+                        column: x => x.FinancialAccountTypeId,
+                        principalTable: "FinancialAccountType",
+                        principalColumn: "FinancialAccountTypeId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Account_Profile_ProfileId",
-                        column: x => x.ProfileId,
-                        principalTable: "Profile",
-                        principalColumn: "ProfileId",
+                        name: "FK_FinancialAccount_Portfolio_PortfolioId",
+                        column: x => x.PortfolioId,
+                        principalTable: "Portfolio",
+                        principalColumn: "PortfolioId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -141,24 +145,24 @@ namespace BudgetUpServer.Migrations
                     Inflow = table.Column<decimal>(type: "numeric", nullable: false),
                     Outflow = table.Column<decimal>(type: "numeric", nullable: false),
                     Cleared = table.Column<bool>(type: "boolean", nullable: false),
-                    ProfileId = table.Column<int>(type: "integer", nullable: false),
+                    PortfolioId = table.Column<int>(type: "integer", nullable: false),
                     VendorId = table.Column<int>(type: "integer", nullable: true),
                     TransactionCategoryId = table.Column<int>(type: "integer", nullable: true),
-                    AccountId = table.Column<int>(type: "integer", nullable: true)
+                    FinancialAccountId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Transaction", x => x.TransactionId);
                     table.ForeignKey(
-                        name: "FK_Transaction_Account_AccountId",
-                        column: x => x.AccountId,
-                        principalTable: "Account",
-                        principalColumn: "AccountId");
+                        name: "FK_Transaction_FinancialAccount_FinancialAccountId",
+                        column: x => x.FinancialAccountId,
+                        principalTable: "FinancialAccount",
+                        principalColumn: "FinancialAccountId");
                     table.ForeignKey(
-                        name: "FK_Transaction_Profile_ProfileId",
-                        column: x => x.ProfileId,
-                        principalTable: "Profile",
-                        principalColumn: "ProfileId",
+                        name: "FK_Transaction_Portfolio_PortfolioId",
+                        column: x => x.PortfolioId,
+                        principalTable: "Portfolio",
+                        principalColumn: "PortfolioId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Transaction_TransactionCategory_TransactionCategoryId",
@@ -172,30 +176,55 @@ namespace BudgetUpServer.Migrations
                         principalColumn: "VendorId");
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Account_AccountTypeId",
-                table: "Account",
-                column: "AccountTypeId");
+            migrationBuilder.InsertData(
+                table: "FinancialCategory",
+                columns: new[] { "FinancialCategoryId", "Name" },
+                values: new object[,]
+                {
+                    { 1, "Asset" },
+                    { 2, "Liability" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Portfolio",
+                columns: new[] { "PortfolioId", "Name" },
+                values: new object[] { 1, "My Portfolio" });
+
+            migrationBuilder.InsertData(
+                table: "FinancialAccountType",
+                columns: new[] { "FinancialAccountTypeId", "FinancialCategoryId", "Name" },
+                values: new object[,]
+                {
+                    { 1, 1, "Checking" },
+                    { 2, 1, "Savings" },
+                    { 3, 1, "Investment" },
+                    { 4, 2, "Credit Card" }
+                });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Account_ProfileId",
-                table: "Account",
-                column: "ProfileId");
+                name: "IX_FinancialAccount_FinancialAccountTypeId",
+                table: "FinancialAccount",
+                column: "FinancialAccountTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AccountType_AccountCategoryId",
-                table: "AccountType",
-                column: "AccountCategoryId");
+                name: "IX_FinancialAccount_PortfolioId",
+                table: "FinancialAccount",
+                column: "PortfolioId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transaction_AccountId",
+                name: "IX_FinancialAccountType_FinancialCategoryId",
+                table: "FinancialAccountType",
+                column: "FinancialCategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transaction_FinancialAccountId",
                 table: "Transaction",
-                column: "AccountId");
+                column: "FinancialAccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transaction_ProfileId",
+                name: "IX_Transaction_PortfolioId",
                 table: "Transaction",
-                column: "ProfileId");
+                column: "PortfolioId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Transaction_TransactionCategoryId",
@@ -208,19 +237,19 @@ namespace BudgetUpServer.Migrations
                 column: "VendorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionCategory_ParentTransactionCategoryId",
+                name: "IX_TransactionCategory_ParentCategoryTransactionCategoryId",
                 table: "TransactionCategory",
-                column: "ParentTransactionCategoryId");
+                column: "ParentCategoryTransactionCategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionCategory_ProfileId",
+                name: "IX_TransactionCategory_PortfolioId",
                 table: "TransactionCategory",
-                column: "ProfileId");
+                column: "PortfolioId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Vendor_ProfileId",
+                name: "IX_Vendor_PortfolioId",
                 table: "Vendor",
-                column: "ProfileId");
+                column: "PortfolioId");
         }
 
         /// <inheritdoc />
@@ -230,7 +259,7 @@ namespace BudgetUpServer.Migrations
                 name: "Transaction");
 
             migrationBuilder.DropTable(
-                name: "Account");
+                name: "FinancialAccount");
 
             migrationBuilder.DropTable(
                 name: "TransactionCategory");
@@ -239,13 +268,13 @@ namespace BudgetUpServer.Migrations
                 name: "Vendor");
 
             migrationBuilder.DropTable(
-                name: "AccountType");
+                name: "FinancialAccountType");
 
             migrationBuilder.DropTable(
-                name: "Profile");
+                name: "Portfolio");
 
             migrationBuilder.DropTable(
-                name: "AccountCategory");
+                name: "FinancialCategory");
         }
     }
 }

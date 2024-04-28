@@ -1,5 +1,6 @@
 using BudgetUpServer.Contexts;
 using Microsoft.EntityFrameworkCore;
+using SwaggerThemes;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
+    app.UseSwaggerThemes(Theme.Monokai);
     app.UseSwaggerUI();
 }
 

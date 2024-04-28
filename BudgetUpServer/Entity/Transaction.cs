@@ -21,13 +21,13 @@ namespace BudgetUpServer.Entity
 
         public bool Cleared { get; set; }
 
-        #region Profile Relation
+        #region Portfolio Relation
 
-        public int ProfileId { get; set; }
+        public int PortfolioId { get; set; }
 
-        public virtual Profile Profile { get; set; }
+        public virtual Portfolio Portfolio { get; set; }
 
-        #endregion Profile Relation
+        #endregion Portfolio Relation
 
         #region Vendor Relation
 
@@ -45,12 +45,12 @@ namespace BudgetUpServer.Entity
 
         #endregion Transaction Category Relation
 
-        #region Account Relation
+        #region FinancialAccount Relation
 
-        public int? AccountId { get; set; }
+        public int? FinancialAccountId { get; set; }
 
-        public virtual Account? Account { get; set; }
+        public virtual FinancialAccount? FinancialAccount { get; set; }
 
-        #endregion Account Relation
+        #endregion FinancialAccount Relation
     }
 }

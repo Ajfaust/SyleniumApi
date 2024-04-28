@@ -5,10 +5,10 @@ namespace BudgetUpServer.Contexts
 {
     public class BudgetContext : DbContext
     {
-        public DbSet<Profile> Profiles { get; set; }
-        public DbSet<Account> Accounts { get; set; }
-        public DbSet<AccountType> AccountTypes { get; set; }
-        public DbSet<AccountCategory> AccountCategories { get; set; }
+        public DbSet<Portfolio> Portfolios { get; set; }
+        public DbSet<FinancialAccount> FinancialAccounts { get; set; }
+        public DbSet<FinancialAccountType> FinancialAccountTypes { get; set; }
+        public DbSet<FinancialCategory> FinancialCategories { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<TransactionCategory> TransactionCategories { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
@@ -19,15 +19,20 @@ namespace BudgetUpServer.Contexts
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<AccountCategory>().HasData(
-                new { AccountCategoryId = 1, AccountCategoryName = "Asset" },
-                new { AccountCategoryId = 2, AccountCategoryName = "Liability" });
-            modelBuilder.Entity<AccountType>().HasData(
-                new { AccountTypeId = 1, AccountCategoryId = 1, AccountTypeName = "Checking" },
-                new { AccountTypeId = 2, AccountCategoryId = 1, AccountTypeName = "Savings" },
-                new { AccountTypeId = 3, AccountCategoryId = 1, AccountTypeName = "Investment" },
-                new { AccountTypeId = 4, AccountCategoryId = 2, AccountTypeName = "Credit Card" },
-                new { AccountTypeId = 5, AccountCategoryId = 2, AccountTypeName = "Loan" });
+            modelBuilder.UseIdentityColumns();
+
+            modelBuilder.Entity<Portfolio>().HasData(new { PortfolioId = 1, Name = "My Portfolio" });
+
+            modelBuilder.Entity<FinancialCategory>().HasData(
+                new { FinancialCategoryId = 1, Name = "Asset" },
+                new { FinancialCategoryId = 2, Name = "Liability" });
+
+            modelBuilder.Entity<FinancialAccountType>().HasData(
+                new { FinancialAccountTypeId = 1, FinancialCategoryId = 1, Name = "Checking" },
+                new { FinancialAccountTypeId = 2, FinancialCategoryId = 1, Name = "Savings" },
+                new { FinancialAccountTypeId = 3, FinancialCategoryId = 1, Name = "Investment" },
+                new { FinancialAccountTypeId = 4, FinancialCategoryId = 2, Name = "Credit Card" });
+
             base.OnModelCreating(modelBuilder);
         }
     }

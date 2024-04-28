@@ -11,10 +11,10 @@ namespace BudgetUpServer.Entity
         public int VendorId { get; set; }
 
         [Required]
-        public string VendorName { get; set; }
+        public string Name { get; set; }
 
-        public int ProfileId { get; set; }
-        public virtual Profile Profile { get; set; }
+        public int PortfolioId { get; set; }
+        public virtual Portfolio Portfolio { get; set; }
 
         public virtual ICollection<Transaction> Transactions { get; } = new List<Transaction>();
     }

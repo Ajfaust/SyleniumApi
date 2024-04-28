@@ -11,24 +11,24 @@ namespace BudgetUpServer.Entity
         public int TransactionCategoryId { get; set; }
 
         [Required]
-        public string TransactionCategoryName { get; set; }
+        public string Name { get; set; }
 
         #region Parent-Child Relation
 
-        public int? ParentTransactionCategoryId { get; set; }
+        public int? ParentId { get; set; }
 
-        public virtual TransactionCategory? ParentTransactionCategory { get; set; }
+        public virtual TransactionCategory? ParentCategory { get; set; }
 
-        public virtual ICollection<TransactionCategory> ChildTransactionCategories { get; } = new List<TransactionCategory>();
+        public virtual ICollection<TransactionCategory> SubCategories { get; } = new List<TransactionCategory>();
 
         #endregion Parent-Child Relation
 
-        #region Profile Relation
+        #region Portfolio Relation
 
-        public int ProfileId { get; set; }
-        public virtual Profile Profile { get; set; }
+        public int PortfolioId { get; set; }
+        public virtual Portfolio Portfolio { get; set; }
 
-        #endregion Profile Relation
+        #endregion Portfolio Relation
 
         #region Transaction Relation
 
