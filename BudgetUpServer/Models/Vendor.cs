@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BudgetUpServer.Entity
+namespace BudgetUpServer.Models
 {
     [Table("Vendor")]
     public class Vendor
@@ -13,8 +13,8 @@ namespace BudgetUpServer.Entity
         [Required]
         public string Name { get; set; }
 
-        public int PortfolioId { get; set; }
-        public virtual Portfolio Portfolio { get; set; }
+        public int LedgerId { get; set; }
+        public virtual Ledger Ledger { get; set; }
 
         public virtual ICollection<Transaction> Transactions { get; } = new List<Transaction>();
     }

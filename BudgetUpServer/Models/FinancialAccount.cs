@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BudgetUpServer.Entity
+namespace BudgetUpServer.Models
 {
     [Table("FinancialAccount")]
     public class FinancialAccount
@@ -13,13 +13,13 @@ namespace BudgetUpServer.Entity
         [Required]
         public string Name { get; set; }
 
-        #region Portfolio Relation
+        #region Ledger Relation
 
-        public int PortfolioId { get; set; }
+        public int LedgerId { get; set; }
 
-        public virtual Portfolio Portfolio { get; set; }
+        public virtual Ledger Ledger { get; set; }
 
-        #endregion Portfolio Relation
+        #endregion Ledger Relation
 
         #region FinancialAccountType Relation
 

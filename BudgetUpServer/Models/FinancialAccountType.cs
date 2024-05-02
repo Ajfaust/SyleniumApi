@@ -1,8 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BudgetUpServer.Entity
+namespace BudgetUpServer.Models
 {
+    public enum FinancialCategory
+    {
+        Asset = 0,
+        Liablility = 1
+    }
+
     [Table("FinancialAccountType")]
     public class FinancialAccountType
     {
@@ -13,13 +19,7 @@ namespace BudgetUpServer.Entity
         [Required]
         public string Name { get; set; }
 
-        #region FinancialCategory Relation
-
-        public int FinancialCategoryId { get; set; }
-
         public FinancialCategory FinancialCategory { get; set; }
-
-        #endregion FinancialCategory Relation
 
         #region FinancialAccount Relation
 

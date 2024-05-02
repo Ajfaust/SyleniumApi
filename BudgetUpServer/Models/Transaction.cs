@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BudgetUpServer.Entity
+namespace BudgetUpServer.Models
 {
     [Table("Transaction")]
     public class Transaction
@@ -21,13 +21,13 @@ namespace BudgetUpServer.Entity
 
         public bool Cleared { get; set; }
 
-        #region Portfolio Relation
+        #region Ledger Relation
 
-        public int PortfolioId { get; set; }
+        public int LedgerId { get; set; }
 
-        public virtual Portfolio Portfolio { get; set; }
+        public virtual Ledger Ledger { get; set; }
 
-        #endregion Portfolio Relation
+        #endregion Ledger Relation
 
         #region Vendor Relation
 

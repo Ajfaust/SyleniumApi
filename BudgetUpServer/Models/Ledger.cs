@@ -1,14 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BudgetUpServer.Entity
+namespace BudgetUpServer.Models
 {
-    [Table("Portfolio")]
-    public class Portfolio
+    [Table("Ledger")]
+    public class Ledger
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int PortfolioId { get; set; }
+        public int LedgerId { get; set; }
 
         [Required]
         public string Name { get; set; }

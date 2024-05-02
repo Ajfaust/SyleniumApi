@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BudgetUpServer.Entity
+namespace BudgetUpServer.Models
 {
     [Table("TransactionCategory")]
     public class TransactionCategory
@@ -23,12 +23,12 @@ namespace BudgetUpServer.Entity
 
         #endregion Parent-Child Relation
 
-        #region Portfolio Relation
+        #region Ledger Relation
 
-        public int PortfolioId { get; set; }
-        public virtual Portfolio Portfolio { get; set; }
+        public int LedgerId { get; set; }
+        public virtual Ledger Ledger { get; set; }
 
-        #endregion Portfolio Relation
+        #endregion Ledger Relation
 
         #region Transaction Relation
 

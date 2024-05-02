@@ -1,4 +1,4 @@
-using BudgetUpServer.Contexts;
+using BudgetUpServer.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using SwaggerThemes;
 
