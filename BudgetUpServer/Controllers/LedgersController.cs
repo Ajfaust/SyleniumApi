@@ -7,6 +7,7 @@ namespace BudgetUpServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Produces("application/json")]
     public class LedgersController : ControllerBase
     {
         private readonly BudgetContext _context;
@@ -16,15 +17,19 @@ namespace BudgetUpServer.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Gets all available Ledgers
+        /// </summary>
+        /// <returns>An array of ledgers</returns>
         // GET: api/Ledgers
         [HttpGet]
-        public IQueryable<LedgerDto> GetLedgers()
+        public IActionResult GetLedgers()
         {
-            return _context.Ledgers.Select(ledger => new LedgerDto()
+            return Ok(_context.Ledgers.Select(l => new LedgerDto()
             {
-                LedgerId = ledger.LedgerId,
-                Name = ledger.Name
-            });
+                LedgerId = l.LedgerId,
+                Name = l.Name,
+            }).ToList());
         }
 
         // GET: api/Ledgers/5
