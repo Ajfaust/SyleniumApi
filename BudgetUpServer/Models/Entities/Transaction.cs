@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BudgetUpServer.Models
+namespace BudgetUpServer.Models.Entities
 {
     [Table("Transaction")]
     public class Transaction

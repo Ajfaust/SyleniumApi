@@ -1,4 +1,4 @@
-﻿using BudgetUpServer.Models;
+﻿using BudgetUpServer.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace BudgetUpServer.DbContexts

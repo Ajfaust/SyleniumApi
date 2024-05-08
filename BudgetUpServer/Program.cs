@@ -1,9 +1,12 @@
 using System.Reflection;
 using BudgetUpServer.DbContexts;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using SwaggerThemes;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 
 // Add services to the container.
 
@@ -26,6 +29,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerThemes(Theme.Monokai);
     app.UseSwaggerUI();
 }
+
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 
