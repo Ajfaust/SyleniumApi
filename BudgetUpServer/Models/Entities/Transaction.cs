@@ -11,7 +11,7 @@ namespace BudgetUpServer.Models.Entities
         public int TransactionId { get; set; }
 
         [Required]
-        public DateOnly Date { get; set; }
+        public DateTime Date { get; set; }
 
         public string? Notes { get; set; }
 
@@ -20,14 +20,6 @@ namespace BudgetUpServer.Models.Entities
         public decimal Outflow { get; set; }
 
         public bool Cleared { get; set; }
-
-        #region Ledger Relation
-
-        public int LedgerId { get; set; }
-
-        public virtual Ledger Ledger { get; set; }
-
-        #endregion Ledger Relation
 
         #region Vendor Relation
 

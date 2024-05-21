@@ -8,6 +8,7 @@ namespace BudgetUpServer.Models.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [ForeignKey(nameof(ParentCategoryId))]
         public int TransactionCategoryId { get; set; }
 
         [Required]
@@ -15,20 +16,13 @@ namespace BudgetUpServer.Models.Entities
 
         #region Parent-Child Relation
 
-        public int? ParentId { get; set; }
+        public int? ParentCategoryId { get; set; }
 
         public virtual TransactionCategory? ParentCategory { get; set; }
 
         public virtual ICollection<TransactionCategory> SubCategories { get; } = new List<TransactionCategory>();
 
         #endregion Parent-Child Relation
-
-        #region Ledger Relation
-
-        public int LedgerId { get; set; }
-        public virtual Ledger Ledger { get; set; }
-
-        #endregion Ledger Relation
 
         #region Transaction Relation
 

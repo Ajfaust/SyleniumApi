@@ -21,14 +21,19 @@ namespace BudgetUpServer.Controllers
         }
 
         // GET: api/Transactions
+        /// <summary>
+        /// Gets all transactions
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<GetAllTransactionsDTO>>> GetTransactions()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<GetTransactionsDTO>>> GetTransactions()
         {
             return await _context
                 .Transactions
                 .OrderByDescending(t => t.Date)
                 .ThenBy(t => t.TransactionId)
-                .Select(t => new GetAllTransactionsDTO
+                .Select(t => new GetTransactionsDTO
                 {
                     TransactionId = t.TransactionId,
                     Date = t.Date,
@@ -41,8 +46,15 @@ namespace BudgetUpServer.Controllers
         }
 
         // GET: api/Transactions/5
+        /// <summary>
+        /// Retrieves a single transaction with the given ID
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id}")]
-        public async Task<ActionResult<Transaction>> GetTransaction(int id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<GetTransactionsDTO>> GetTransaction(int id)
         {
             var transaction = await _context.Transactions.FindAsync(id);
 
@@ -51,18 +63,49 @@ namespace BudgetUpServer.Controllers
                 return NotFound();
             }
 
-            return transaction;
+            return new GetTransactionsDTO
+            {
+                TransactionId = transaction.TransactionId,
+                Date = transaction.Date,
+                Notes = transaction.Notes,
+                Inflow = transaction.Inflow,
+                Outflow = transaction.Outflow,
+                Cleared = transaction.Cleared,
+            };
         }
 
         // PUT: api/Transactions/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        /// <summary>
+        /// Updates the transaction with the given ID
+        /// </summary>
+        /// <param name="id">ID of the transaction</param>
+        /// <param name="transactionDTO">Updated transaction values</param>
+        /// <returns></returns>
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTransaction(int id, Transaction transaction)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PutTransaction(int id, [FromBody] UpdateTransactionDTO transactionDTO)
         {
-            if (id != transaction.TransactionId)
+            if (id != transactionDTO.TransactionId)
             {
                 return BadRequest();
             }
+
+            var transaction = await _context.Transactions.FindAsync(id);
+            if (transaction == null)
+            {
+                return NotFound();
+            }
+
+            transaction.Date = transactionDTO.Date;
+            transaction.Notes = transactionDTO.Notes;
+            transaction.Inflow = transactionDTO.Inflow;
+            transaction.Outflow = transactionDTO.Outflow;
+            transaction.Cleared = transactionDTO.Cleared;
 
             _context.Entry(transaction).State = EntityState.Modified;
 
@@ -78,7 +121,7 @@ namespace BudgetUpServer.Controllers
                 }
                 else
                 {
-                    throw;
+                    return StatusCode(500, "Something went wrong updating this transaction.");
                 }
             }
 
@@ -94,6 +137,7 @@ namespace BudgetUpServer.Controllers
         /// <returns></returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<NewTransactionDto>> PostTransaction([FromBody] NewTransactionDto newTransactionDto)
         {
             try
@@ -101,7 +145,6 @@ namespace BudgetUpServer.Controllers
                 // Generate new transaction based on associated DTO received
                 var newTransaction = new Transaction()
                 {
-                    LedgerId = newTransactionDto.LedgerId,
                     Date = newTransactionDto.Date,
                     Notes = newTransactionDto.Notes,
                     Inflow = newTransactionDto.Inflow,
@@ -124,7 +167,15 @@ namespace BudgetUpServer.Controllers
         }
 
         // DELETE: api/Transactions/5
+        /// <summary>
+        /// Removes the transaction with the given ID
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteTransaction(int id)
         {
             var transaction = await _context.Transactions.FindAsync(id);

@@ -3,6 +3,7 @@ using System;
 using BudgetUpServer.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BudgetUpServer.Migrations
 {
     [DbContext(typeof(BudgetContext))]
-    partial class BudgetContextModelSnapshot : ModelSnapshot
+    [Migration("20240516170614_DeleteLedger")]
+    partial class DeleteLedger
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -119,15 +122,15 @@ namespace BudgetUpServer.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("ParentCategoryId")
+                    b.Property<int?>("ParentCategoryTransactionCategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ParentId")
                         .HasColumnType("integer");
 
                     b.HasKey("TransactionCategoryId");
 
-                    b.HasIndex("ParentCategoryId");
-
-                    b.HasIndex("Name", "ParentCategoryId")
-                        .IsUnique();
+                    b.HasIndex("ParentCategoryTransactionCategoryId");
 
                     b.ToTable("TransactionCategory");
                 });
@@ -185,7 +188,7 @@ namespace BudgetUpServer.Migrations
                 {
                     b.HasOne("BudgetUpServer.Models.Entities.TransactionCategory", "ParentCategory")
                         .WithMany("SubCategories")
-                        .HasForeignKey("ParentCategoryId");
+                        .HasForeignKey("ParentCategoryTransactionCategoryId");
 
                     b.Navigation("ParentCategory");
                 });

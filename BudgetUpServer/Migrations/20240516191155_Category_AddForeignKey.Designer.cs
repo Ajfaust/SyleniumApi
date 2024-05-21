@@ -3,6 +3,7 @@ using System;
 using BudgetUpServer.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BudgetUpServer.Migrations
 {
     [DbContext(typeof(BudgetContext))]
-    partial class BudgetContextModelSnapshot : ModelSnapshot
+    [Migration("20240516191155_Category_AddForeignKey")]
+    partial class Category_AddForeignKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -125,9 +128,6 @@ namespace BudgetUpServer.Migrations
                     b.HasKey("TransactionCategoryId");
 
                     b.HasIndex("ParentCategoryId");
-
-                    b.HasIndex("Name", "ParentCategoryId")
-                        .IsUnique();
 
                     b.ToTable("TransactionCategory");
                 });

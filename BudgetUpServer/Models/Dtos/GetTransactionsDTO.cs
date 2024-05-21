@@ -1,10 +1,12 @@
 ﻿namespace BudgetUpServer.Models.Dtos
 {
-    public class GetAllTransactionsDTO
+    public class GetTransactionsDTO
     {
         public int TransactionId { get; set; }
 
-        public DateOnly Date { get; set; }
+        public int LedgerId { get; set; }
+
+        public DateTime Date { get; set; }
 
         public string Notes { get; set; }
 

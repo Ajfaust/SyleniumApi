@@ -1,7 +1,9 @@
 ﻿namespace BudgetUpServer.Models.Dtos
 {
-    public class NewTransactionDto
+    public class UpdateTransactionDTO
     {
+        public int TransactionId { get; set; }
+
         public int LedgerId { get; set; }
 
         public DateTime Date { get; set; }
@@ -13,11 +15,5 @@
         public decimal Outflow { get; set; }
 
         public bool Cleared { get; set; }
-
-        //public int? VendorId { get; set; }
-
-        //public int? CategoryId { get; set; }
-
-        //public int? AccountId { get; set; }
     }
 }

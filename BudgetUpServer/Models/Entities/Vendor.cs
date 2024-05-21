@@ -13,9 +13,6 @@ namespace BudgetUpServer.Models.Entities
         [Required]
         public string Name { get; set; }
 
-        public int LedgerId { get; set; }
-        public virtual Ledger Ledger { get; set; }
-
         public virtual ICollection<Transaction> Transactions { get; } = new List<Transaction>();
     }
 }

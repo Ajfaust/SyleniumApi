@@ -3,6 +3,7 @@ using System;
 using BudgetUpServer.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BudgetUpServer.Migrations
 {
     [DbContext(typeof(BudgetContext))]
-    partial class BudgetContextModelSnapshot : ModelSnapshot
+    [Migration("20240508233837_Transaction_ChangeDateToDateTime")]
+    partial class Transaction_ChangeDateToDateTime
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,6 +36,9 @@ namespace BudgetUpServer.Migrations
                     b.Property<int>("FinancialAccountTypeId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("LedgerId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -40,6 +46,8 @@ namespace BudgetUpServer.Migrations
                     b.HasKey("FinancialAccountId");
 
                     b.HasIndex("FinancialAccountTypeId");
+
+                    b.HasIndex("LedgerId");
 
                     b.ToTable("FinancialAccount");
                 });
@@ -64,6 +72,23 @@ namespace BudgetUpServer.Migrations
                     b.ToTable("FinancialAccountType");
                 });
 
+            modelBuilder.Entity("BudgetUpServer.Models.Entities.Ledger", b =>
+                {
+                    b.Property<int>("LedgerId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("LedgerId"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("LedgerId");
+
+                    b.ToTable("Ledger");
+                });
+
             modelBuilder.Entity("BudgetUpServer.Models.Entities.Transaction", b =>
                 {
                     b.Property<int>("TransactionId")
@@ -84,6 +109,9 @@ namespace BudgetUpServer.Migrations
                     b.Property<decimal>("Inflow")
                         .HasColumnType("numeric");
 
+                    b.Property<int>("LedgerId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Notes")
                         .HasColumnType("text");
 
@@ -100,6 +128,8 @@ namespace BudgetUpServer.Migrations
 
                     b.HasIndex("FinancialAccountId");
 
+                    b.HasIndex("LedgerId");
+
                     b.HasIndex("TransactionCategoryId");
 
                     b.HasIndex("VendorId");
@@ -115,19 +145,24 @@ namespace BudgetUpServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TransactionCategoryId"));
 
+                    b.Property<int>("LedgerId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("ParentCategoryId")
+                    b.Property<int?>("ParentCategoryTransactionCategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ParentId")
                         .HasColumnType("integer");
 
                     b.HasKey("TransactionCategoryId");
 
-                    b.HasIndex("ParentCategoryId");
+                    b.HasIndex("LedgerId");
 
-                    b.HasIndex("Name", "ParentCategoryId")
-                        .IsUnique();
+                    b.HasIndex("ParentCategoryTransactionCategoryId");
 
                     b.ToTable("TransactionCategory");
                 });
@@ -140,11 +175,16 @@ namespace BudgetUpServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VendorId"));
 
+                    b.Property<int>("LedgerId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("VendorId");
+
+                    b.HasIndex("LedgerId");
 
                     b.ToTable("Vendor");
                 });
@@ -157,7 +197,15 @@ namespace BudgetUpServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BudgetUpServer.Models.Entities.Ledger", "Ledger")
+                        .WithMany("FinancialAccounts")
+                        .HasForeignKey("LedgerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("FinancialAccountType");
+
+                    b.Navigation("Ledger");
                 });
 
             modelBuilder.Entity("BudgetUpServer.Models.Entities.Transaction", b =>
@@ -165,6 +213,12 @@ namespace BudgetUpServer.Migrations
                     b.HasOne("BudgetUpServer.Models.Entities.FinancialAccount", "FinancialAccount")
                         .WithMany()
                         .HasForeignKey("FinancialAccountId");
+
+                    b.HasOne("BudgetUpServer.Models.Entities.Ledger", "Ledger")
+                        .WithMany("Transactions")
+                        .HasForeignKey("LedgerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("BudgetUpServer.Models.Entities.TransactionCategory", "TransactionCategory")
                         .WithMany("Transactions")
@@ -176,6 +230,8 @@ namespace BudgetUpServer.Migrations
 
                     b.Navigation("FinancialAccount");
 
+                    b.Navigation("Ledger");
+
                     b.Navigation("TransactionCategory");
 
                     b.Navigation("Vendor");
@@ -183,16 +239,46 @@ namespace BudgetUpServer.Migrations
 
             modelBuilder.Entity("BudgetUpServer.Models.Entities.TransactionCategory", b =>
                 {
+                    b.HasOne("BudgetUpServer.Models.Entities.Ledger", "Ledger")
+                        .WithMany("TransactionCategories")
+                        .HasForeignKey("LedgerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("BudgetUpServer.Models.Entities.TransactionCategory", "ParentCategory")
                         .WithMany("SubCategories")
-                        .HasForeignKey("ParentCategoryId");
+                        .HasForeignKey("ParentCategoryTransactionCategoryId");
+
+                    b.Navigation("Ledger");
 
                     b.Navigation("ParentCategory");
+                });
+
+            modelBuilder.Entity("BudgetUpServer.Models.Entities.Vendor", b =>
+                {
+                    b.HasOne("BudgetUpServer.Models.Entities.Ledger", "Ledger")
+                        .WithMany("Vendors")
+                        .HasForeignKey("LedgerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ledger");
                 });
 
             modelBuilder.Entity("BudgetUpServer.Models.Entities.FinancialAccountType", b =>
                 {
                     b.Navigation("FinancialAccounts");
+                });
+
+            modelBuilder.Entity("BudgetUpServer.Models.Entities.Ledger", b =>
+                {
+                    b.Navigation("FinancialAccounts");
+
+                    b.Navigation("TransactionCategories");
+
+                    b.Navigation("Transactions");
+
+                    b.Navigation("Vendors");
                 });
 
             modelBuilder.Entity("BudgetUpServer.Models.Entities.TransactionCategory", b =>

@@ -26,7 +26,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerThemes(Theme.Monokai);
+    app.UseSwaggerThemes(Theme.Gruvbox);
     app.UseSwaggerUI();
 }
 

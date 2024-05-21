@@ -5,7 +5,6 @@ namespace BudgetUpServer.DbContexts
 {
     public class BudgetContext : DbContext
     {
-        public DbSet<Ledger> Ledgers { get; set; }
         public DbSet<FinancialAccount> FinancialAccounts { get; set; }
         public DbSet<FinancialAccountType> FinancialAccountTypes { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
@@ -19,6 +18,13 @@ namespace BudgetUpServer.DbContexts
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseIdentityColumns();
+
+            modelBuilder.Entity<TransactionCategory>()
+                .HasMany(e => e.SubCategories)
+                .WithOne(e => e.ParentCategory)
+                .HasForeignKey(e => e.ParentCategoryId);
+
+            modelBuilder.Entity<TransactionCategory>().HasIndex(e => new { e.Name, e.ParentCategoryId }).IsUnique();
 
             base.OnModelCreating(modelBuilder);
         }

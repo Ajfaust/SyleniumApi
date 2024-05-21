@@ -13,14 +13,6 @@ namespace BudgetUpServer.Models.Entities
         [Required]
         public string Name { get; set; }
 
-        #region Ledger Relation
-
-        public int LedgerId { get; set; }
-
-        public virtual Ledger Ledger { get; set; }
-
-        #endregion Ledger Relation
-
         #region FinancialAccountType Relation
 
         public int FinancialAccountTypeId { get; set; }
