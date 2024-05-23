@@ -1,1 +1,1 @@
-BudgetUp API Backend
+Allosta API Backend
