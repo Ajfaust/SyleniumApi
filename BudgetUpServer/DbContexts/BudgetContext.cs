@@ -1,7 +1,7 @@
-﻿using BudgetUpServer.Models.Entities;
+﻿using AllostaServer.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace BudgetUpServer.DbContexts
+namespace AllostaServer.DbContexts
 {
     public class BudgetContext : DbContext
     {

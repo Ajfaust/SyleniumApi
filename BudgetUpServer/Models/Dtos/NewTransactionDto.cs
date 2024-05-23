@@ -1,4 +1,4 @@
-﻿namespace BudgetUpServer.Models.Dtos
+﻿namespace AllostaServer.Models.Dtos
 {
     public class NewTransactionDto
     {
@@ -16,7 +16,7 @@
 
         //public int? VendorId { get; set; }
 
-        //public int? CategoryId { get; set; }
+        public int CategoryId { get; set; }
 
         //public int? AccountId { get; set; }
     }

@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BudgetUpServer\BudgetUpServer.csproj" />
+    <ProjectReference Include="..\BudgetUpServer\AllostaServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

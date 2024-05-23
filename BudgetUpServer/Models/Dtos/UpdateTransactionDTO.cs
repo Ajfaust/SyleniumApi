@@ -1,4 +1,4 @@
-﻿namespace BudgetUpServer.Models.Dtos
+﻿namespace AllostaServer.Models.Dtos
 {
     public class UpdateTransactionDTO
     {
@@ -15,5 +15,7 @@
         public decimal Outflow { get; set; }
 
         public bool Cleared { get; set; }
+
+        public int CategoryId { get; set; }
     }
 }

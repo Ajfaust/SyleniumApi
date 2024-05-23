@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BudgetUpServer.Models.Entities
+namespace AllostaServer.Models.Entities
 {
     [Table("TransactionCategory")]
     public class TransactionCategory
@@ -26,7 +26,7 @@ namespace BudgetUpServer.Models.Entities
 
         #region Transaction Relation
 
-        public virtual ICollection<Transaction> Transactions { get; } = new List<Transaction>();
+        public virtual ICollection<Transaction> Transactions { get; set; }
 
         #endregion Transaction Relation
     }

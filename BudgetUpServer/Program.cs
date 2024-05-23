@@ -1,5 +1,5 @@
 using System.Reflection;
-using BudgetUpServer.DbContexts;
+using AllostaServer.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using SwaggerThemes;

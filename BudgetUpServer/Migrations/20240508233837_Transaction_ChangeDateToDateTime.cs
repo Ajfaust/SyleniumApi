@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace BudgetUpServer.Migrations
+namespace AllostaServer.Migrations
 {
     /// <inheritdoc />
     public partial class Transaction_ChangeDateToDateTime : Migration

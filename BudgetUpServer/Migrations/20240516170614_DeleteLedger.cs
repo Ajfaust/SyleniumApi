@@ -3,7 +3,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace BudgetUpServer.Migrations
+namespace AllostaServer.Migrations
 {
     /// <inheritdoc />
     public partial class DeleteLedger : Migration

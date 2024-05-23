@@ -1,10 +1,10 @@
-﻿using BudgetUpServer.DbContexts;
-using BudgetUpServer.Models.Dtos;
-using BudgetUpServer.Models.Entities;
+﻿using AllostaServer.DbContexts;
+using AllostaServer.Models.Dtos;
+using AllostaServer.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace BudgetUpServer.Controllers
+namespace AllostaServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -124,7 +124,6 @@ namespace BudgetUpServer.Controllers
                     Name = transactionCategory.Name,
                     ParentCategoryId = transactionCategory.ParentId,
                 };
-
 
                 _context.TransactionCategories.Add(newCategory);
                 await _context.SaveChangesAsync();

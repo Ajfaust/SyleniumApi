@@ -1,10 +1,10 @@
-﻿using BudgetUpServer.DbContexts;
-using BudgetUpServer.Models.Dtos;
-using BudgetUpServer.Models.Entities;
+﻿using AllostaServer.DbContexts;
+using AllostaServer.Models.Dtos;
+using AllostaServer.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace BudgetUpServer.Controllers
+namespace AllostaServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -37,10 +37,11 @@ namespace BudgetUpServer.Controllers
                 {
                     TransactionId = t.TransactionId,
                     Date = t.Date,
-                    Notes = t.Notes,
+                    Notes = t.Notes ?? string.Empty,
                     Inflow = t.Inflow,
                     Outflow = t.Outflow,
                     Cleared = t.Cleared,
+                    CategoryId = t.TransactionCategoryId,
                 })
                 .ToListAsync();
         }
@@ -67,10 +68,11 @@ namespace BudgetUpServer.Controllers
             {
                 TransactionId = transaction.TransactionId,
                 Date = transaction.Date,
-                Notes = transaction.Notes,
+                Notes = transaction.Notes ?? string.Empty,
                 Inflow = transaction.Inflow,
                 Outflow = transaction.Outflow,
                 Cleared = transaction.Cleared,
+                CategoryId = transaction.TransactionCategoryId,
             };
         }
 
@@ -96,7 +98,8 @@ namespace BudgetUpServer.Controllers
             }
 
             var transaction = await _context.Transactions.FindAsync(id);
-            if (transaction == null)
+            var category = await _context.TransactionCategories.FindAsync(transactionDTO.CategoryId);
+            if (transaction == null || category == null)
             {
                 return NotFound();
             }
@@ -106,6 +109,7 @@ namespace BudgetUpServer.Controllers
             transaction.Inflow = transactionDTO.Inflow;
             transaction.Outflow = transactionDTO.Outflow;
             transaction.Cleared = transactionDTO.Cleared;
+            transaction.TransactionCategoryId = transactionDTO.CategoryId;
 
             _context.Entry(transaction).State = EntityState.Modified;
 
@@ -149,7 +153,8 @@ namespace BudgetUpServer.Controllers
                     Notes = newTransactionDto.Notes,
                     Inflow = newTransactionDto.Inflow,
                     Outflow = newTransactionDto.Outflow,
-                    Cleared = newTransactionDto.Cleared
+                    Cleared = newTransactionDto.Cleared,
+                    TransactionCategoryId = newTransactionDto.CategoryId,
                 };
 
                 _logger.LogInformation($"Posting transaction {newTransaction}");

@@ -1,4 +1,4 @@
-﻿namespace BudgetUpServer.Models.Dtos
+﻿namespace AllostaServer.Models.Dtos
 {
     public class GetCategoriesDTO
     {

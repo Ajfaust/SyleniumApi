@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AllostaServer.Migrations
 {
     [DbContext(typeof(BudgetContext))]
-    [Migration("20240502160420_IntialMigration")]
-    partial class IntialMigration
+    [Migration("20240521004446_Transaction_Category_MakeRelationshipRequired")]
+    partial class Transaction_Category_MakeRelationshipRequired
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace AllostaServer.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("AllostaServer.Models.FinancialAccount", b =>
+            modelBuilder.Entity("AllostaServer.Models.Entities.FinancialAccount", b =>
                 {
                     b.Property<int>("FinancialAccountId")
                         .ValueGeneratedOnAdd()
@@ -36,9 +36,6 @@ namespace AllostaServer.Migrations
                     b.Property<int>("FinancialAccountTypeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("LedgerId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -47,12 +44,10 @@ namespace AllostaServer.Migrations
 
                     b.HasIndex("FinancialAccountTypeId");
 
-                    b.HasIndex("LedgerId");
-
                     b.ToTable("FinancialAccount");
                 });
 
-            modelBuilder.Entity("AllostaServer.Models.FinancialAccountType", b =>
+            modelBuilder.Entity("AllostaServer.Models.Entities.FinancialAccountType", b =>
                 {
                     b.Property<int>("FinancialAccountTypeId")
                         .ValueGeneratedOnAdd()
@@ -72,24 +67,7 @@ namespace AllostaServer.Migrations
                     b.ToTable("FinancialAccountType");
                 });
 
-            modelBuilder.Entity("AllostaServer.Models.Ledger", b =>
-                {
-                    b.Property<int>("LedgerId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("LedgerId"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("LedgerId");
-
-                    b.ToTable("Ledger");
-                });
-
-            modelBuilder.Entity("AllostaServer.Models.Transaction", b =>
+            modelBuilder.Entity("AllostaServer.Models.Entities.Transaction", b =>
                 {
                     b.Property<int>("TransactionId")
                         .ValueGeneratedOnAdd()
@@ -100,8 +78,8 @@ namespace AllostaServer.Migrations
                     b.Property<bool>("Cleared")
                         .HasColumnType("boolean");
 
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("FinancialAccountId")
                         .HasColumnType("integer");
@@ -109,16 +87,13 @@ namespace AllostaServer.Migrations
                     b.Property<decimal>("Inflow")
                         .HasColumnType("numeric");
 
-                    b.Property<int>("LedgerId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Notes")
                         .HasColumnType("text");
 
                     b.Property<decimal>("Outflow")
                         .HasColumnType("numeric");
 
-                    b.Property<int?>("TransactionCategoryId")
+                    b.Property<int>("TransactionCategoryId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("VendorId")
@@ -128,8 +103,6 @@ namespace AllostaServer.Migrations
 
                     b.HasIndex("FinancialAccountId");
 
-                    b.HasIndex("LedgerId");
-
                     b.HasIndex("TransactionCategoryId");
 
                     b.HasIndex("VendorId");
@@ -137,7 +110,7 @@ namespace AllostaServer.Migrations
                     b.ToTable("Transaction");
                 });
 
-            modelBuilder.Entity("AllostaServer.Models.TransactionCategory", b =>
+            modelBuilder.Entity("AllostaServer.Models.Entities.TransactionCategory", b =>
                 {
                     b.Property<int>("TransactionCategoryId")
                         .ValueGeneratedOnAdd()
@@ -145,29 +118,24 @@ namespace AllostaServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TransactionCategoryId"));
 
-                    b.Property<int>("LedgerId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("ParentCategoryTransactionCategoryId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ParentId")
+                    b.Property<int?>("ParentCategoryId")
                         .HasColumnType("integer");
 
                     b.HasKey("TransactionCategoryId");
 
-                    b.HasIndex("LedgerId");
+                    b.HasIndex("ParentCategoryId");
 
-                    b.HasIndex("ParentCategoryTransactionCategoryId");
+                    b.HasIndex("Name", "ParentCategoryId")
+                        .IsUnique();
 
                     b.ToTable("TransactionCategory");
                 });
 
-            modelBuilder.Entity("AllostaServer.Models.Vendor", b =>
+            modelBuilder.Entity("AllostaServer.Models.Entities.Vendor", b =>
                 {
                     b.Property<int>("VendorId")
                         .ValueGeneratedOnAdd()
@@ -175,120 +143,71 @@ namespace AllostaServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VendorId"));
 
-                    b.Property<int>("LedgerId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("VendorId");
 
-                    b.HasIndex("LedgerId");
-
                     b.ToTable("Vendor");
                 });
 
-            modelBuilder.Entity("AllostaServer.Models.FinancialAccount", b =>
+            modelBuilder.Entity("AllostaServer.Models.Entities.FinancialAccount", b =>
                 {
-                    b.HasOne("AllostaServer.Models.FinancialAccountType", "FinancialAccountType")
+                    b.HasOne("AllostaServer.Models.Entities.FinancialAccountType", "FinancialAccountType")
                         .WithMany("FinancialAccounts")
                         .HasForeignKey("FinancialAccountTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AllostaServer.Models.Ledger", "Ledger")
-                        .WithMany("FinancialAccounts")
-                        .HasForeignKey("LedgerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("FinancialAccountType");
-
-                    b.Navigation("Ledger");
                 });
 
-            modelBuilder.Entity("AllostaServer.Models.Transaction", b =>
+            modelBuilder.Entity("AllostaServer.Models.Entities.Transaction", b =>
                 {
-                    b.HasOne("AllostaServer.Models.FinancialAccount", "FinancialAccount")
+                    b.HasOne("AllostaServer.Models.Entities.FinancialAccount", "FinancialAccount")
                         .WithMany()
                         .HasForeignKey("FinancialAccountId");
 
-                    b.HasOne("AllostaServer.Models.Ledger", "Ledger")
+                    b.HasOne("AllostaServer.Models.Entities.TransactionCategory", "TransactionCategory")
                         .WithMany("Transactions")
-                        .HasForeignKey("LedgerId")
+                        .HasForeignKey("TransactionCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AllostaServer.Models.TransactionCategory", "TransactionCategory")
-                        .WithMany("Transactions")
-                        .HasForeignKey("TransactionCategoryId");
-
-                    b.HasOne("AllostaServer.Models.Vendor", "Vendor")
+                    b.HasOne("AllostaServer.Models.Entities.Vendor", "Vendor")
                         .WithMany("Transactions")
                         .HasForeignKey("VendorId");
 
                     b.Navigation("FinancialAccount");
-
-                    b.Navigation("Ledger");
 
                     b.Navigation("TransactionCategory");
 
                     b.Navigation("Vendor");
                 });
 
-            modelBuilder.Entity("AllostaServer.Models.TransactionCategory", b =>
+            modelBuilder.Entity("AllostaServer.Models.Entities.TransactionCategory", b =>
                 {
-                    b.HasOne("AllostaServer.Models.Ledger", "Ledger")
-                        .WithMany("TransactionCategories")
-                        .HasForeignKey("LedgerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AllostaServer.Models.TransactionCategory", "ParentCategory")
+                    b.HasOne("AllostaServer.Models.Entities.TransactionCategory", "ParentCategory")
                         .WithMany("SubCategories")
-                        .HasForeignKey("ParentCategoryTransactionCategoryId");
-
-                    b.Navigation("Ledger");
+                        .HasForeignKey("ParentCategoryId");
 
                     b.Navigation("ParentCategory");
                 });
 
-            modelBuilder.Entity("AllostaServer.Models.Vendor", b =>
-                {
-                    b.HasOne("AllostaServer.Models.Ledger", "Ledger")
-                        .WithMany("Vendors")
-                        .HasForeignKey("LedgerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Ledger");
-                });
-
-            modelBuilder.Entity("AllostaServer.Models.FinancialAccountType", b =>
+            modelBuilder.Entity("AllostaServer.Models.Entities.FinancialAccountType", b =>
                 {
                     b.Navigation("FinancialAccounts");
                 });
 
-            modelBuilder.Entity("AllostaServer.Models.Ledger", b =>
-                {
-                    b.Navigation("FinancialAccounts");
-
-                    b.Navigation("TransactionCategories");
-
-                    b.Navigation("Transactions");
-
-                    b.Navigation("Vendors");
-                });
-
-            modelBuilder.Entity("AllostaServer.Models.TransactionCategory", b =>
+            modelBuilder.Entity("AllostaServer.Models.Entities.TransactionCategory", b =>
                 {
                     b.Navigation("SubCategories");
 
                     b.Navigation("Transactions");
                 });
 
-            modelBuilder.Entity("AllostaServer.Models.Vendor", b =>
+            modelBuilder.Entity("AllostaServer.Models.Entities.Vendor", b =>
                 {
                     b.Navigation("Transactions");
                 });

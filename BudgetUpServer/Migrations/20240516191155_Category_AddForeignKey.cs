@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace BudgetUpServer.Migrations
+namespace AllostaServer.Migrations
 {
     /// <inheritdoc />
     public partial class Category_AddForeignKey : Migration

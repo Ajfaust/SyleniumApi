@@ -1,0 +1,6 @@
+@AllostaServer_HostAddress = http://localhost:5262
+
+GET {{AllostaServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
