@@ -3,6 +3,7 @@ using System;
 using AllostaServer.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AllostaServer.Migrations
 {
     [DbContext(typeof(BudgetContext))]
-    partial class BudgetContextModelSnapshot : ModelSnapshot
+    [Migration("20240528002928_FinancialAccount_RenameToAccount")]
+    partial class FinancialAccount_RenameToAccount
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,6 +33,9 @@ namespace AllostaServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AccountId"));
 
+                    b.Property<int>("AccountTypeId")
+                        .HasColumnType("integer");
+
                     b.Property<double>("Balance")
                         .HasColumnType("double precision");
 
@@ -39,7 +45,29 @@ namespace AllostaServer.Migrations
 
                     b.HasKey("AccountId");
 
+                    b.HasIndex("AccountTypeId");
+
                     b.ToTable("Account");
+                });
+
+            modelBuilder.Entity("AllostaServer.Models.Entities.AccountType", b =>
+                {
+                    b.Property<int>("AccountTypeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AccountTypeId"));
+
+                    b.Property<int>("FinancialCategory")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("AccountTypeId");
+
+                    b.ToTable("AccountType");
                 });
 
             modelBuilder.Entity("AllostaServer.Models.Entities.Transaction", b =>
@@ -127,6 +155,17 @@ namespace AllostaServer.Migrations
                     b.ToTable("Vendor");
                 });
 
+            modelBuilder.Entity("AllostaServer.Models.Entities.Account", b =>
+                {
+                    b.HasOne("AllostaServer.Models.Entities.AccountType", "AccountType")
+                        .WithMany("Accounts")
+                        .HasForeignKey("AccountTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccountType");
+                });
+
             modelBuilder.Entity("AllostaServer.Models.Entities.Transaction", b =>
                 {
                     b.HasOne("AllostaServer.Models.Entities.Account", "Account")
@@ -162,6 +201,11 @@ namespace AllostaServer.Migrations
             modelBuilder.Entity("AllostaServer.Models.Entities.Account", b =>
                 {
                     b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("AllostaServer.Models.Entities.AccountType", b =>
+                {
+                    b.Navigation("Accounts");
                 });
 
             modelBuilder.Entity("AllostaServer.Models.Entities.TransactionCategory", b =>

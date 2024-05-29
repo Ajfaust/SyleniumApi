@@ -37,12 +37,12 @@ namespace AllostaServer.Models.Entities
 
         #endregion Transaction Category Relation
 
-        #region FinancialAccount Relation
+        #region Account Relation
 
-        public int? FinancialAccountId { get; set; }
+        public int? AccountId { get; set; }
 
-        public virtual FinancialAccount? FinancialAccount { get; set; }
+        public virtual Account? Account { get; set; }
 
-        #endregion FinancialAccount Relation
+        #endregion Account Relation
     }
 }

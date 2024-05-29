@@ -5,8 +5,7 @@ namespace AllostaServer.DbContexts
 {
     public class BudgetContext : DbContext
     {
-        public DbSet<FinancialAccount> FinancialAccounts { get; set; }
-        public DbSet<FinancialAccountType> FinancialAccountTypes { get; set; }
+        public DbSet<Account> Accounts { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<TransactionCategory> TransactionCategories { get; set; }
         public DbSet<Transaction> Transactions { get; set; }

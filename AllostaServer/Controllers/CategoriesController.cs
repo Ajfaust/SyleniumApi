@@ -20,7 +20,7 @@ namespace AllostaServer.Controllers
             _logger = logger;
         }
 
-        // GET: api/Categories
+        // GET: /Categories
         /// <summary>
         /// Gets all categories and associated subcategories
         /// </summary>
@@ -48,7 +48,7 @@ namespace AllostaServer.Controllers
                 .ToListAsync();
         }
 
-        // GET: api/Categories/5
+        // GET: /Categories/5
         [HttpGet("{id}")]
         public async Task<ActionResult<GetCategoriesDTO>> GetTransactionCategory(int id)
         {
@@ -70,7 +70,7 @@ namespace AllostaServer.Controllers
             return result;
         }
 
-        // PUT: api/Categories/5
+        // PUT: /Categories/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutTransactionCategory(int id, [FromBody] UpdateCategoryDTO updatedCategory)
@@ -110,7 +110,7 @@ namespace AllostaServer.Controllers
             return NoContent();
         }
 
-        // POST: api/Categories
+        // POST: /Categories
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -137,7 +137,7 @@ namespace AllostaServer.Controllers
             }
         }
 
-        // DELETE: api/Categories/5
+        // DELETE: /Categories/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTransactionCategory(int id)
         {

@@ -1,4 +1,4 @@
-﻿using BudgetUpServer.DbContexts;
+﻿using AllostaServer.DbContexts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -7,13 +7,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.Web.CodeGeneration.Design;
 using Testcontainers.PostgreSql;
 
-namespace BudgetUpServer.Test
+namespace AllostaServer.Test
 {
-    public class BudgetUpTestFactory : WebApplicationFactory<Program>, IAsyncLifetime
+    public class AllostaServerTestFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         private readonly PostgreSqlContainer _container;
 
-        public BudgetUpTestFactory()
+        public AllostaServerTestFactory()
         {
             _container = new PostgreSqlBuilder()
                 .WithDatabase("budgetdb_test")

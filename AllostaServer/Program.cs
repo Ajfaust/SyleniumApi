@@ -5,6 +5,18 @@ using Serilog;
 using SwaggerThemes;
 
 var builder = WebApplication.CreateBuilder(args);
+var myPolicy = "MyPolicy";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: myPolicy,
+                      policy =>
+                      {
+                          policy.AllowAnyOrigin();
+                          policy.AllowAnyMethod();
+                          policy.AllowAnyHeader();
+                      });
+});
 
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 
@@ -29,6 +41,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerThemes(Theme.Gruvbox);
     app.UseSwaggerUI();
 }
+
+app.UseCors(myPolicy);
 
 app.UseSerilogRequestLogging();
 

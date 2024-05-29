@@ -4,8 +4,6 @@
     {
         public int TransactionId { get; set; }
 
-        public int LedgerId { get; set; }
-
         public DateTime Date { get; set; }
 
         public string Notes { get; set; }

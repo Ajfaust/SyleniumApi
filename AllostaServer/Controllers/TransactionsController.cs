@@ -20,7 +20,7 @@ namespace AllostaServer.Controllers
             _logger = logger;
         }
 
-        // GET: api/Transactions
+        // GET: /Transactions
         /// <summary>
         /// Gets all transactions
         /// </summary>
@@ -46,7 +46,26 @@ namespace AllostaServer.Controllers
                 .ToListAsync();
         }
 
-        // GET: api/Transactions/5
+        [HttpGet("account/{accountid}")]
+        public async Task<ActionResult<IEnumerable<GetTransactionsDTO>>> GetTransactionsForAccount(int accountId)
+        {
+            return await _context
+                .Transactions
+                .Where(t => t.AccountId == accountId)
+                .Select(t => new GetTransactionsDTO
+                {
+                    TransactionId = t.TransactionId,
+                    Date = t.Date,
+                    Notes = t.Notes ?? string.Empty,
+                    Inflow = t.Inflow,
+                    Outflow = t.Outflow,
+                    Cleared = t.Cleared,
+                    CategoryId = t.TransactionCategoryId,
+                })
+                .ToListAsync();
+        }
+
+        // GET: /Transactions/5
         /// <summary>
         /// Retrieves a single transaction with the given ID
         /// </summary>
@@ -76,7 +95,7 @@ namespace AllostaServer.Controllers
             };
         }
 
-        // PUT: api/Transactions/5
+        // PUT: /Transactions/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         /// <summary>
         /// Updates the transaction with the given ID
@@ -132,7 +151,7 @@ namespace AllostaServer.Controllers
             return NoContent();
         }
 
-        // POST: api/Transactions
+        // POST: /Transactions
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         /// <summary>
         /// Creates a new transaction
@@ -171,7 +190,7 @@ namespace AllostaServer.Controllers
             }
         }
 
-        // DELETE: api/Transactions/5
+        // DELETE: /Transactions/5
         /// <summary>
         /// Removes the transaction with the given ID
         /// </summary>
