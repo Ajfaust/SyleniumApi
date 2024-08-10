@@ -46,7 +46,7 @@ namespace AllostaServer.Controllers
                 .ToListAsync();
         }
 
-        [HttpGet("account/{accountid}")]
+        [HttpGet("account/{accountId}")]
         public async Task<ActionResult<IEnumerable<GetTransactionsDTO>>> GetTransactionsForAccount(int accountId)
         {
             return await _context
