@@ -1,1 +1,1 @@
-Allosta API Backend
+Sylenium API Backend
