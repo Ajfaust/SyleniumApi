@@ -1,0 +1,6 @@
+@SyleniumApi_HostAddress = http://localhost:5262
+
+GET {{SyleniumApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
