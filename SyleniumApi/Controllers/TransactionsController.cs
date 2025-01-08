@@ -78,7 +78,7 @@ namespace SyleniumApi.Controllers
         /// Updates the transaction with the given ID
         /// </summary>
         /// <param name="id">ID of the transaction</param>
-        /// <param name="transactionDTO">Updated transaction values</param>
+        /// <param name="transactionDto">Updated transaction values</param>
         /// <returns></returns>
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -86,26 +86,26 @@ namespace SyleniumApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PutTransaction(int id, [FromBody] UpdateTransactionDto transactionDTO)
+        public async Task<IActionResult> PutTransaction(int id, [FromBody] UpdateTransactionDto transactionDto)
         {
-            if (id != transactionDTO.TransactionId)
+            if (id != transactionDto.TransactionId)
             {
                 return BadRequest();
             }
 
             var transaction = await context.Transactions.FindAsync(id);
-            var category = await context.TransactionCategories.FindAsync(transactionDTO.TransactionCategoryId);
+            var category = await context.TransactionCategories.FindAsync(transactionDto.TransactionCategoryId);
             if (transaction == null || category == null)
             {
                 return NotFound();
             }
 
-            transaction.Date = transactionDTO.Date;
-            transaction.Description = transactionDTO.Description;
-            transaction.Inflow = transactionDTO.Inflow;
-            transaction.Outflow = transactionDTO.Outflow;
-            transaction.Cleared = transactionDTO.Cleared;
-            transaction.TransactionCategoryId = transactionDTO.TransactionCategoryId;
+            transaction.Date = transactionDto.Date;
+            transaction.Description = transactionDto.Description;
+            transaction.Inflow = transactionDto.Inflow;
+            transaction.Outflow = transactionDto.Outflow;
+            transaction.Cleared = transactionDto.Cleared;
+            transaction.TransactionCategoryId = transactionDto.TransactionCategoryId;
 
             context.Entry(transaction).State = EntityState.Modified;
 

@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using SyleniumApi.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using SwaggerThemes;
 
 var builder = WebApplication.CreateBuilder(args);
 var myPolicy = "MyPolicy";
@@ -43,7 +42,6 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerThemes(Theme.Gruvbox);
     app.UseSwaggerUI();
 }
 
