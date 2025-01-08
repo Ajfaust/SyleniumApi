@@ -40,6 +40,47 @@ namespace SyleniumApi.Migrations
                     b.ToTable("Account");
                 });
 
+            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialCategory", b =>
+                {
+                    b.Property<int>("FinancialCategoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FinancialCategoryId"));
+
+                    b.Property<string>("FinancialCategoryName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("JournalId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("FinancialCategoryId");
+
+                    b.HasIndex("JournalId");
+
+                    b.ToTable("FinancialCategory");
+                });
+
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Journal", b =>
+                {
+                    b.Property<int>("JournalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("JournalId"));
+
+                    b.Property<string>("JournalName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("JournalId");
+
+                    b.ToTable("Journal");
+                });
+
             modelBuilder.Entity("SyleniumApi.Models.Entities.Transaction", b =>
                 {
                     b.Property<int>("TransactionId")
@@ -126,6 +167,17 @@ namespace SyleniumApi.Migrations
                     b.HasKey("VendorId");
 
                     b.ToTable("Vendor");
+                });
+
+            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialCategory", b =>
+                {
+                    b.HasOne("SyleniumApi.Models.Entities.Journal", "Journal")
+                        .WithMany()
+                        .HasForeignKey("JournalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Journal");
                 });
 
             modelBuilder.Entity("SyleniumApi.Models.Entities.Transaction", b =>

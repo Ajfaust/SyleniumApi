@@ -28,7 +28,7 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
-builder.Services.AddDbContext<SyleniumContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("BudgetDb")));
+builder.Services.AddDbContext<SyleniumContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
