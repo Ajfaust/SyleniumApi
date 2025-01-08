@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SyleniumApi.DbContexts;
@@ -11,9 +12,11 @@ using SyleniumApi.DbContexts;
 namespace SyleniumApi.Migrations
 {
     [DbContext(typeof(SyleniumContext))]
-    partial class SyleniumContextModelSnapshot : ModelSnapshot
+    [Migration("20250108222940_AddLedger")]
+    partial class AddLedger
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -131,7 +134,7 @@ namespace SyleniumApi.Migrations
                     b.Property<decimal>("Outflow")
                         .HasColumnType("numeric");
 
-                    b.Property<int?>("TransactionCategoryId")
+                    b.Property<int>("TransactionCategoryId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("VendorId")
@@ -224,7 +227,9 @@ namespace SyleniumApi.Migrations
 
                     b.HasOne("SyleniumApi.Models.Entities.TransactionCategory", "TransactionCategory")
                         .WithMany("Transactions")
-                        .HasForeignKey("TransactionCategoryId");
+                        .HasForeignKey("TransactionCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("SyleniumApi.Models.Entities.Vendor", "Vendor")
                         .WithMany("Transactions")

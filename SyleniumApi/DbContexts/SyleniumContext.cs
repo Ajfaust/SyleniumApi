@@ -13,7 +13,14 @@ namespace SyleniumApi.DbContexts
         /// </summary>
         public DbSet<Journal> Journals { get; set; }
         
+        /// <summary>
+        /// DB Set for Ledgers
+        /// </summary>
+        public DbSet<Ledger> Ledgers { get; set; }
         
+        /// <summary>
+        /// DB Set for Financial Categories
+        /// </summary>
         public DbSet<FinancialCategory> FinancialCategories { get; set; }
         
         /// <summary>

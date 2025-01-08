@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SyleniumApi.DbContexts;
@@ -11,9 +12,11 @@ using SyleniumApi.DbContexts;
 namespace SyleniumApi.Migrations
 {
     [DbContext(typeof(SyleniumContext))]
-    partial class SyleniumContextModelSnapshot : ModelSnapshot
+    [Migration("20250108223724_UpdatesToForeignRelations")]
+    partial class UpdatesToForeignRelations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

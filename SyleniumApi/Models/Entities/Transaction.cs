@@ -32,7 +32,7 @@ namespace SyleniumApi.Models.Entities
 
         #region Transaction Category Relation
 
-        public int TransactionCategoryId { get; set; }
+        public int? TransactionCategoryId { get; set; }
 
         public virtual TransactionCategory? TransactionCategory { get; set; }
 
@@ -40,9 +40,10 @@ namespace SyleniumApi.Models.Entities
 
         #region Account Relation
 
+        [Required]
         public int AccountId { get; set; }
 
-        public virtual Account? Account { get; set; }
+        public virtual required Account Account { get; set; }
 
         #endregion Account Relation
     }

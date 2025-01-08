@@ -3,22 +3,23 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SyleniumApi.Models.Entities;
 
-[Table("FinancialCategory")]
-public class FinancialCategory
+[Table("Ledger")]
+public class Ledger
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int FinancialCategoryId { get; set; }
+    public int LedgerId { get; set; }
     
     [Required]
     [MaxLength(200)]
-    public required string FinancialCategoryName { get; set; }
+    public required string LedgerName { get; set; }
     
     #region Journal Relation
     
     [Required]
     public int JournalId { get; set; }
     
+    // Journal of type Journal
     public virtual required Journal Journal { get; set; }
     
     #endregion

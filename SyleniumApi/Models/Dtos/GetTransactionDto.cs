@@ -4,7 +4,7 @@
     {
         public int TransactionId { get; set; }
         
-        public int? AccountId { get; set; }
+        public int AccountId { get; set; }
 
         public DateTime Date { get; set; }
 
@@ -16,6 +16,6 @@
 
         public bool Cleared { get; set; }
 
-        public int TransactionCategoryId { get; set; }
+        public int? TransactionCategoryId { get; set; }
     }
 }

@@ -158,7 +158,7 @@ namespace SyleniumApi.Controllers
                     Outflow = newTransactionDto.Outflow,
                     Cleared = newTransactionDto.Cleared,
                     TransactionCategoryId = newTransactionDto.TransactionCategoryId,
-                    AccountId = account.AccountId
+                    Account = account
                 };
 
                 logger.LogInformation($"Posting transaction {newTransaction}");
