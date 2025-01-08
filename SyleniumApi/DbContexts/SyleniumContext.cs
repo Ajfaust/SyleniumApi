@@ -8,7 +8,13 @@ namespace SyleniumApi.DbContexts
     /// </summary>
     public class SyleniumContext(DbContextOptions options) : DbContext(options)
     {
+        /// <summary>
+        /// DB Set for Journals
+        /// </summary>
         public DbSet<Journal> Journals { get; set; }
+        
+        
+        public DbSet<FinancialCategory> FinancialCategories { get; set; }
         
         /// <summary>
         /// DB Set for Accounts
