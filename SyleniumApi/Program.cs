@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 using SyleniumApi.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using SyleniumApi.Interfaces;
+using SyleniumApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var myPolicy = "MyPolicy";
@@ -27,7 +29,11 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
-builder.Services.AddDbContext<SyleniumContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
+// builder.Services.AddDbContext<SyleniumContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
+
+builder.Services.AddScoped<IJournalService, JournalService>();
+builder.Services.AddDbContext<SyleniumContext>(options => options.UseNpgsql("Host=192.168.39.15;Port=5432;Database=sylenium;Username=syleniumdev;Password=syldev"));
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -56,3 +62,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program
+{
+}
