@@ -1,45 +1,38 @@
+using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Interfaces;
 using SyleniumApi.Models.Dtos;
 using SyleniumApi.Models.Entities;
+using SyleniumApi.Services;
 
 namespace SyleniumApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class JournalsController(SyleniumContext context) : ControllerBase
+    public class JournalsController(IJournalService journalService) : ControllerBase
     {
+        private readonly IJournalService _journalService = journalService;
+        
         // GET: api/Journals
         [HttpGet]
         public async Task<ActionResult<IEnumerable<JournalDto>>> GetJournals()
         {
-            return await context
-                .Journals
-                .Select(j => new JournalDto()
-                {
-                    JournalId = j.JournalId,
-                    JournalName = j.JournalName,
-                })
-                .ToListAsync();
+            return await _journalService.GetJournals();
         }
 
         // GET: api/Journals/5
         [HttpGet("{id:int}")]
         public async Task<ActionResult<JournalDto>> GetJournal(int id)
         {
-            var journal = await context.Journals.FindAsync(id);
-
-            if (journal == null)
+            var result = await _journalService.GetJournal(id);
+            if (result == null)
             {
                 return NotFound();
             }
 
-            return new JournalDto()
-            {
-                JournalId = journal.JournalId,
-                JournalName = journal.JournalName,
-            };
+            return result;
         }
 
         // PUT: api/Journals/5
@@ -52,32 +45,13 @@ namespace SyleniumApi.Controllers
                 return BadRequest();
             }
 
-            var journal = await context.Journals.FindAsync(id);
-            
-            if (journal == null)
-            {
-                return NotFound();
-            }
-            
-            journal.JournalId = journalDto.JournalId;
-            journal.JournalName = journalDto.JournalName;
-
-            context.Entry(journal).State = EntityState.Modified;
-
             try
             {
-                await context.SaveChangesAsync();
+                await _journalService.UpdateJournal(id, journalDto);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DataException)
             {
-                if (!JournalExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
             return NoContent();
@@ -88,37 +62,18 @@ namespace SyleniumApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Journal>> PostJournal(JournalDto journalDto)
         {
-            var journal = new Journal()
-            {
-                JournalId = journalDto.JournalId,
-                JournalName = journalDto.JournalName,
-            };
-            
-            context.Journals.Add(journal);
-            await context.SaveChangesAsync();
+            var result = await _journalService.CreateJournal(journalDto);
 
-            return CreatedAtAction("GetJournal", new { id = journal.JournalId }, journal);
+            return CreatedAtAction("GetJournal", new { id = result.JournalId }, result);
         }
 
         // DELETE: api/Journals/5
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteJournal(int id)
         {
-            var journal = await context.Journals.FindAsync(id);
-            if (journal == null)
-            {
-                return NotFound();
-            }
-
-            context.Journals.Remove(journal);
-            await context.SaveChangesAsync();
+            await _journalService.DeleteJournal(id);
 
             return NoContent();
-        }
-
-        private bool JournalExists(int id)
-        {
-            return context.Journals.Any(e => e.JournalId == id);
         }
     }
 }
