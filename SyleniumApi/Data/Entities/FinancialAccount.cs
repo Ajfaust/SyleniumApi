@@ -1,18 +1,18 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace SyleniumApi.Models.Entities
+namespace SyleniumApi.Data.Entities
 {
-    [Table("Account")]
-    public class Account
+    [Table("FinancialAccount")]
+    public class FinancialAccount
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int AccountId { get; set; }
+        public int FinancialAccountId { get; set; }
 
         [Required]
         [MaxLength(200)]
-        public required string AccountName { get; set; }
+        public required string FinancialAccountName { get; set; }
 
 
         #region Transaction Relation

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace SyleniumApi.Models.Entities
+namespace SyleniumApi.Data.Entities
 {
     [Table("Transaction")]
     public class Transaction
@@ -43,7 +43,7 @@ namespace SyleniumApi.Models.Entities
         [Required]
         public int AccountId { get; set; }
 
-        public virtual required Account Account { get; set; }
+        public virtual required FinancialAccount FinancialAccount { get; set; }
 
         #endregion Account Relation
     }

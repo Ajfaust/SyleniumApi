@@ -2,7 +2,7 @@ using SyleniumApi.Contracts;
 
 namespace SyleniumApi.Features.Ledgers;
 
-public static class MappingExtensions
+public static class LedgerMappingExtensions
 {
     public static CreateLedger.Request MapCreateLedgerRequest(this CreateLedgerRequest request)
     {

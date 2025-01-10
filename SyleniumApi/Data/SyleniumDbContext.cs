@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SyleniumApi.Models.Entities;
+using SyleniumApi.Data.Entities;
 
 namespace SyleniumApi.DbContexts
 {
@@ -16,12 +16,12 @@ namespace SyleniumApi.DbContexts
         /// <summary>
         /// DB Set for Financial Categories
         /// </summary>
-        public DbSet<FinancialCategory> FinancialCategories { get; set; }
+        public DbSet<FinancialAccountCategory> FinancialAccountCategories { get; set; }
         
         /// <summary>
         /// DB Set for Accounts
         /// </summary>
-        public DbSet<Account> Accounts { get; set; }
+        public DbSet<FinancialAccount> FinancialAccounts { get; set; }
         
         /// <summary>
         /// DB Set for Vendors

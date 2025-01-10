@@ -5,7 +5,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SyleniumApi.Contracts;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Models.Entities;
 
 namespace SyleniumApi.Features.Ledgers;
 

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace SyleniumApi.Models.Entities;
+namespace SyleniumApi.Data.Entities;
 
 [Table("Ledger")]
 public class Ledger

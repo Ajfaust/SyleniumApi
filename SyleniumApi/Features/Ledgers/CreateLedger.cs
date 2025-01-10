@@ -3,8 +3,8 @@ using FluentResults;
 using FluentValidation;
 using MediatR;
 using SyleniumApi.Contracts;
+using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Models.Entities;
 
 namespace SyleniumApi.Features.Ledgers;
 
