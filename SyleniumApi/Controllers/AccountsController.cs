@@ -12,7 +12,7 @@ namespace SyleniumApi.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Produces("application/json")]
-    public class AccountsController(SyleniumContext context, ILogger<AccountsController> logger) : ControllerBase
+    public class AccountsController(SyleniumDbContext dbContext, ILogger<AccountsController> logger) : ControllerBase
     {
         private readonly ILogger<AccountsController> _logger = logger;
 
@@ -25,7 +25,7 @@ namespace SyleniumApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<GetAccountDto>>> GetAccounts()
         {
-            return await context.Accounts
+            return await dbContext.Accounts
                 .Select(fa => new GetAccountDto
                 {
                     AccountId = fa.AccountId,
@@ -43,7 +43,7 @@ namespace SyleniumApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<GetAccountDto>> GetAccount(int id)
         {
-            var account = await context
+            var account = await dbContext
                 .Accounts
                 .Include(fa => fa.Transactions)
                 .FirstOrDefaultAsync(fa => fa.AccountId == id);
@@ -84,7 +84,7 @@ namespace SyleniumApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAccount(int id, [FromBody] NewEditAccountDTO accountDto)
         {
-            Account? account = await context.Accounts.FindAsync(id);
+            Account? account = await dbContext.Accounts.FindAsync(id);
             if (id != account?.AccountId)
             {
                 return BadRequest();
@@ -92,11 +92,11 @@ namespace SyleniumApi.Controllers
 
             account.AccountName = accountDto.Name;
 
-            context.Entry(account).State = EntityState.Modified;
+            dbContext.Entry(account).State = EntityState.Modified;
 
             try
             {
-                await context.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -126,8 +126,8 @@ namespace SyleniumApi.Controllers
             {
                 AccountName = accountDto.Name,
             };
-            context.Accounts.Add(newAccount);
-            await context.SaveChangesAsync();
+            dbContext.Accounts.Add(newAccount);
+            await dbContext.SaveChangesAsync();
 
             return CreatedAtAction("GetAccount", new { id = newAccount.AccountId }, accountDto);
         }
@@ -141,21 +141,21 @@ namespace SyleniumApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAccount(int id)
         {
-            var account = await context.Accounts.FindAsync(id);
+            var account = await dbContext.Accounts.FindAsync(id);
             if (account == null)
             {
                 return NotFound();
             }
 
-            context.Accounts.Remove(account);
-            await context.SaveChangesAsync();
+            dbContext.Accounts.Remove(account);
+            await dbContext.SaveChangesAsync();
 
             return NoContent();
         }
 
         private bool AccountExists(int id)
         {
-            return context.Accounts.Any(e => e.AccountId == id);
+            return dbContext.Accounts.Any(e => e.AccountId == id);
         }
     }
 }

@@ -7,11 +7,11 @@ using SyleniumApi.Models.Entities;
 
 namespace SyleniumApi.Services;
 
-public sealed class JournalService(SyleniumContext context) : IJournalService
+public sealed class JournalService(SyleniumDbContext dbContext) : IJournalService
 {
     public async Task<List<JournalDto>> GetJournals()
     {
-        return await context
+        return await dbContext
             .Journals
             .Select(j => new JournalDto
             {
@@ -23,7 +23,7 @@ public sealed class JournalService(SyleniumContext context) : IJournalService
     
     public async Task<JournalDto?> GetJournal(int id)
     {
-        var journal = await context
+        var journal = await dbContext
             .Journals
             .FirstOrDefaultAsync(j => j.JournalId == id);
 
@@ -46,8 +46,8 @@ public sealed class JournalService(SyleniumContext context) : IJournalService
             JournalName = journalDto.JournalName,
         };
         
-        context.Journals.Add(journal);
-        await context.SaveChangesAsync();
+        dbContext.Journals.Add(journal);
+        await dbContext.SaveChangesAsync();
 
         return new JournalDto()
         {
@@ -58,7 +58,7 @@ public sealed class JournalService(SyleniumContext context) : IJournalService
     
     public async Task UpdateJournal(int id, JournalDto journalDto)
     {
-        var journal = await context.Journals.FindAsync(id);
+        var journal = await dbContext.Journals.FindAsync(id);
 
         if (journal == null)
         {
@@ -66,19 +66,19 @@ public sealed class JournalService(SyleniumContext context) : IJournalService
         }
 
         journal.JournalName = journalDto.JournalName;
-        context.Entry(journal).State = EntityState.Modified;
+        dbContext.Entry(journal).State = EntityState.Modified;
         
-        await context.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
     }
     
     public async Task DeleteJournal(int id)
     {
-        var journal = await context.Journals.FindAsync(id);
+        var journal = await dbContext.Journals.FindAsync(id);
 
         if (journal != null)
         {
-            context.Journals.Remove(journal);
-            await context.SaveChangesAsync();
+            dbContext.Journals.Remove(journal);
+            await dbContext.SaveChangesAsync();
         }
     }
 }

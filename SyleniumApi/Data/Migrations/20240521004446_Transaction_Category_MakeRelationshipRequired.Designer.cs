@@ -11,7 +11,7 @@ using SyleniumApi.DbContexts;
 
 namespace SyleniumApi.Migrations
 {
-    [DbContext(typeof(SyleniumContext))]
+    [DbContext(typeof(SyleniumDbContext))]
     [Migration("20240521004446_Transaction_Category_MakeRelationshipRequired")]
     partial class Transaction_Category_MakeRelationshipRequired
     {

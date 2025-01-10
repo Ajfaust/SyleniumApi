@@ -8,13 +8,13 @@ namespace SyleniumApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class LedgersController(SyleniumContext context) : ControllerBase
+    public class LedgersController(SyleniumDbContext dbContext) : ControllerBase
     {
         // GET: api/Ledgers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<LedgerDto>>> GetLedgers()
         {
-            return await context.Ledgers
+            return await dbContext.Ledgers
                 .Select(ledger => new LedgerDto
                 {
                     LedgerId = ledger.LedgerId,
@@ -27,7 +27,7 @@ namespace SyleniumApi.Controllers
         [HttpGet("{id:int}")]
         public async Task<ActionResult<LedgerDto>> GetLedger(int id)
         {
-            var ledger = await context.Ledgers.FindAsync(id);
+            var ledger = await dbContext.Ledgers.FindAsync(id);
 
             if (ledger == null)
             {
@@ -51,7 +51,7 @@ namespace SyleniumApi.Controllers
                 return BadRequest();
             }
 
-            var ledger = await context.Ledgers.FindAsync(id);
+            var ledger = await dbContext.Ledgers.FindAsync(id);
             if (ledger == null)
             {
                 return NotFound();
@@ -59,11 +59,11 @@ namespace SyleniumApi.Controllers
 
             ledger.LedgerName = ledgerDto.LedgerName;
 
-            context.Entry(ledger).State = EntityState.Modified;
+            dbContext.Entry(ledger).State = EntityState.Modified;
 
             try
             {
-                await context.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -85,7 +85,7 @@ namespace SyleniumApi.Controllers
         [HttpPost]
         public async Task<ActionResult<LedgerDto>> PostLedger(int journalId, [FromBody] LedgerDto ledgerDto)
         {
-            var journal = await context.Journals.FindAsync(journalId);
+            var journal = await dbContext.Journals.FindAsync(journalId);
             if (journal == null)
             {
                 return BadRequest();
@@ -96,8 +96,8 @@ namespace SyleniumApi.Controllers
                 LedgerName = ledgerDto.LedgerName,
                 Journal = journal
             };
-            context.Ledgers.Add(ledger);
-            await context.SaveChangesAsync();
+            dbContext.Ledgers.Add(ledger);
+            await dbContext.SaveChangesAsync();
 
             return CreatedAtAction("GetLedger", new { id = ledger.LedgerId }, ledger.LedgerId);
         }
@@ -106,21 +106,21 @@ namespace SyleniumApi.Controllers
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteLedger(int id)
         {
-            var ledger = await context.Ledgers.FindAsync(id);
+            var ledger = await dbContext.Ledgers.FindAsync(id);
             if (ledger == null)
             {
                 return NotFound();
             }
 
-            context.Ledgers.Remove(ledger);
-            await context.SaveChangesAsync();
+            dbContext.Ledgers.Remove(ledger);
+            await dbContext.SaveChangesAsync();
 
             return NoContent();
         }
 
         private bool LedgerExists(int id)
         {
-            return context.Ledgers.Any(e => e.LedgerId == id);
+            return dbContext.Ledgers.Any(e => e.LedgerId == id);
         }
     }
 }

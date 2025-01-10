@@ -9,15 +9,15 @@ namespace SyleniumApi.Tests.JournalController;
 public class UpdateJournalTests(IntegrationTestFactory factory) : IClassFixture<IntegrationTestFactory>
 {
     private readonly Fixture _fixture = new();
-    private readonly SyleniumContext _context = factory.Context;
+    private readonly SyleniumDbContext _dbContext = factory.DbContext;
     private readonly HttpClient _client = factory.CreateClient();
     
     [Fact]
     public async Task When_Journal_Exists_Should_Update_Journal()
     {
         var existingJournal = _fixture.Create<Journal>();
-        await _context.AddAsync(existingJournal);
-        await _context.SaveChangesAsync();
+        await _dbContext.AddAsync(existingJournal);
+        await _dbContext.SaveChangesAsync();
 
         const string expectedName = "Updated Journal Name";
         var journalDto = _fixture.Create<JournalDto>();

@@ -6,7 +6,7 @@ namespace SyleniumApi.DbContexts
     /// <summary>
     /// Context for a Budget
     /// </summary>
-    public class SyleniumContext(DbContextOptions options) : DbContext(options)
+    public class SyleniumDbContext(DbContextOptions options) : DbContext(options)
     {
         /// <summary>
         /// DB Set for Journals

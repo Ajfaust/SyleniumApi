@@ -11,9 +11,9 @@ using SyleniumApi.DbContexts;
 
 namespace SyleniumApi.Migrations
 {
-    [DbContext(typeof(SyleniumContext))]
-    [Migration("20240516190149_TransactionCategory_FixCircularReference")]
-    partial class TransactionCategory_FixCircularReference
+    [DbContext(typeof(SyleniumDbContext))]
+    [Migration("20240516170614_DeleteLedger")]
+    partial class DeleteLedger
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -122,7 +122,15 @@ namespace SyleniumApi.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("ParentCategoryTransactionCategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("integer");
+
                     b.HasKey("TransactionCategoryId");
+
+                    b.HasIndex("ParentCategoryTransactionCategoryId");
 
                     b.ToTable("TransactionCategory");
                 });
@@ -180,9 +188,7 @@ namespace SyleniumApi.Migrations
                 {
                     b.HasOne("SyleniumApi.Models.Entities.TransactionCategory", "ParentCategory")
                         .WithMany("SubCategories")
-                        .HasForeignKey("TransactionCategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ParentCategoryTransactionCategoryId");
 
                     b.Navigation("ParentCategory");
                 });

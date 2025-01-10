@@ -32,7 +32,7 @@ builder.Services.AddControllers()
 // builder.Services.AddDbContext<SyleniumContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
 
 builder.Services.AddScoped<IJournalService, JournalService>();
-builder.Services.AddDbContext<SyleniumContext>(options => options.UseNpgsql("Host=192.168.39.15;Port=5432;Database=sylenium;Username=syleniumdev;Password=syldev"));
+builder.Services.AddDbContext<SyleniumDbContext>(options => options.UseNpgsql("Host=192.168.39.15;Port=5432;Database=sylenium;Username=syleniumdev;Password=syldev"));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

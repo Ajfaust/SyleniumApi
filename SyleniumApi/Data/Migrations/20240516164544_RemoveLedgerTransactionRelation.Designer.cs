@@ -11,9 +11,9 @@ using SyleniumApi.DbContexts;
 
 namespace SyleniumApi.Migrations
 {
-    [DbContext(typeof(SyleniumContext))]
-    [Migration("20240502160420_IntialMigration")]
-    partial class IntialMigration
+    [DbContext(typeof(SyleniumDbContext))]
+    [Migration("20240516164544_RemoveLedgerTransactionRelation")]
+    partial class RemoveLedgerTransactionRelation
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace SyleniumApi.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("SyleniumApi.Models.FinancialAccount", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialAccount", b =>
                 {
                     b.Property<int>("FinancialAccountId")
                         .ValueGeneratedOnAdd()
@@ -52,7 +52,7 @@ namespace SyleniumApi.Migrations
                     b.ToTable("FinancialAccount");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.FinancialAccountType", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialAccountType", b =>
                 {
                     b.Property<int>("FinancialAccountTypeId")
                         .ValueGeneratedOnAdd()
@@ -72,7 +72,7 @@ namespace SyleniumApi.Migrations
                     b.ToTable("FinancialAccountType");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.Ledger", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Ledger", b =>
                 {
                     b.Property<int>("LedgerId")
                         .ValueGeneratedOnAdd()
@@ -89,7 +89,7 @@ namespace SyleniumApi.Migrations
                     b.ToTable("Ledger");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.Transaction", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Transaction", b =>
                 {
                     b.Property<int>("TransactionId")
                         .ValueGeneratedOnAdd()
@@ -100,17 +100,14 @@ namespace SyleniumApi.Migrations
                     b.Property<bool>("Cleared")
                         .HasColumnType("boolean");
 
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("FinancialAccountId")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("Inflow")
                         .HasColumnType("numeric");
-
-                    b.Property<int>("LedgerId")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
@@ -128,8 +125,6 @@ namespace SyleniumApi.Migrations
 
                     b.HasIndex("FinancialAccountId");
 
-                    b.HasIndex("LedgerId");
-
                     b.HasIndex("TransactionCategoryId");
 
                     b.HasIndex("VendorId");
@@ -137,7 +132,7 @@ namespace SyleniumApi.Migrations
                     b.ToTable("Transaction");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.TransactionCategory", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.TransactionCategory", b =>
                 {
                     b.Property<int>("TransactionCategoryId")
                         .ValueGeneratedOnAdd()
@@ -167,7 +162,7 @@ namespace SyleniumApi.Migrations
                     b.ToTable("TransactionCategory");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.Vendor", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Vendor", b =>
                 {
                     b.Property<int>("VendorId")
                         .ValueGeneratedOnAdd()
@@ -189,15 +184,15 @@ namespace SyleniumApi.Migrations
                     b.ToTable("Vendor");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.FinancialAccount", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialAccount", b =>
                 {
-                    b.HasOne("SyleniumApi.Models.FinancialAccountType", "FinancialAccountType")
+                    b.HasOne("SyleniumApi.Models.Entities.FinancialAccountType", "FinancialAccountType")
                         .WithMany("FinancialAccounts")
                         .HasForeignKey("FinancialAccountTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SyleniumApi.Models.Ledger", "Ledger")
+                    b.HasOne("SyleniumApi.Models.Entities.Ledger", "Ledger")
                         .WithMany("FinancialAccounts")
                         .HasForeignKey("LedgerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -208,44 +203,36 @@ namespace SyleniumApi.Migrations
                     b.Navigation("Ledger");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.Transaction", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Transaction", b =>
                 {
-                    b.HasOne("SyleniumApi.Models.FinancialAccount", "FinancialAccount")
+                    b.HasOne("SyleniumApi.Models.Entities.FinancialAccount", "FinancialAccount")
                         .WithMany()
                         .HasForeignKey("FinancialAccountId");
 
-                    b.HasOne("SyleniumApi.Models.Ledger", "Ledger")
-                        .WithMany("Transactions")
-                        .HasForeignKey("LedgerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SyleniumApi.Models.TransactionCategory", "TransactionCategory")
+                    b.HasOne("SyleniumApi.Models.Entities.TransactionCategory", "TransactionCategory")
                         .WithMany("Transactions")
                         .HasForeignKey("TransactionCategoryId");
 
-                    b.HasOne("SyleniumApi.Models.Vendor", "Vendor")
+                    b.HasOne("SyleniumApi.Models.Entities.Vendor", "Vendor")
                         .WithMany("Transactions")
                         .HasForeignKey("VendorId");
 
                     b.Navigation("FinancialAccount");
-
-                    b.Navigation("Ledger");
 
                     b.Navigation("TransactionCategory");
 
                     b.Navigation("Vendor");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.TransactionCategory", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.TransactionCategory", b =>
                 {
-                    b.HasOne("SyleniumApi.Models.Ledger", "Ledger")
+                    b.HasOne("SyleniumApi.Models.Entities.Ledger", "Ledger")
                         .WithMany("TransactionCategories")
                         .HasForeignKey("LedgerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SyleniumApi.Models.TransactionCategory", "ParentCategory")
+                    b.HasOne("SyleniumApi.Models.Entities.TransactionCategory", "ParentCategory")
                         .WithMany("SubCategories")
                         .HasForeignKey("ParentCategoryTransactionCategoryId");
 
@@ -254,9 +241,9 @@ namespace SyleniumApi.Migrations
                     b.Navigation("ParentCategory");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.Vendor", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Vendor", b =>
                 {
-                    b.HasOne("SyleniumApi.Models.Ledger", "Ledger")
+                    b.HasOne("SyleniumApi.Models.Entities.Ledger", "Ledger")
                         .WithMany("Vendors")
                         .HasForeignKey("LedgerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -265,30 +252,28 @@ namespace SyleniumApi.Migrations
                     b.Navigation("Ledger");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.FinancialAccountType", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialAccountType", b =>
                 {
                     b.Navigation("FinancialAccounts");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.Ledger", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Ledger", b =>
                 {
                     b.Navigation("FinancialAccounts");
 
                     b.Navigation("TransactionCategories");
 
-                    b.Navigation("Transactions");
-
                     b.Navigation("Vendors");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.TransactionCategory", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.TransactionCategory", b =>
                 {
                     b.Navigation("SubCategories");
 
                     b.Navigation("Transactions");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.Vendor", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Vendor", b =>
                 {
                     b.Navigation("Transactions");
                 });

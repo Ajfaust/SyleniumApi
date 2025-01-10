@@ -8,7 +8,7 @@ namespace SyleniumApi.Tests.JournalController;
 public class CreateJournalTests(IntegrationTestFactory factory) : IClassFixture<IntegrationTestFactory>
 {
     private readonly Fixture _fixture = new();
-    private readonly SyleniumContext _context = factory.Context;
+    private readonly SyleniumDbContext _dbContext = factory.DbContext;
     private readonly HttpClient _client = factory.CreateClient();
     
     [Fact]

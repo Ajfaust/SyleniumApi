@@ -11,9 +11,9 @@ using SyleniumApi.DbContexts;
 
 namespace SyleniumApi.Migrations
 {
-    [DbContext(typeof(SyleniumContext))]
-    [Migration("20240516164544_RemoveLedgerTransactionRelation")]
-    partial class RemoveLedgerTransactionRelation
+    [DbContext(typeof(SyleniumDbContext))]
+    [Migration("20250108223724_UpdatesToForeignRelations")]
+    partial class UpdatesToForeignRelations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,51 +25,63 @@ namespace SyleniumApi.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialAccount", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Account", b =>
                 {
-                    b.Property<int>("FinancialAccountId")
+                    b.Property<int>("AccountId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FinancialAccountId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AccountId"));
 
-                    b.Property<int>("FinancialAccountTypeId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("LedgerId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
+                    b.Property<string>("AccountName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
-                    b.HasKey("FinancialAccountId");
+                    b.HasKey("AccountId");
 
-                    b.HasIndex("FinancialAccountTypeId");
-
-                    b.HasIndex("LedgerId");
-
-                    b.ToTable("FinancialAccount");
+                    b.ToTable("Account");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialAccountType", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialCategory", b =>
                 {
-                    b.Property<int>("FinancialAccountTypeId")
+                    b.Property<int>("FinancialCategoryId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FinancialAccountTypeId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FinancialCategoryId"));
 
-                    b.Property<int>("FinancialCategory")
+                    b.Property<string>("FinancialCategoryName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("JournalId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Name")
+                    b.HasKey("FinancialCategoryId");
+
+                    b.HasIndex("JournalId");
+
+                    b.ToTable("FinancialCategory");
+                });
+
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Journal", b =>
+                {
+                    b.Property<int>("JournalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("JournalId"));
+
+                    b.Property<string>("JournalName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
-                    b.HasKey("FinancialAccountTypeId");
+                    b.HasKey("JournalId");
 
-                    b.ToTable("FinancialAccountType");
+                    b.ToTable("Journal");
                 });
 
             modelBuilder.Entity("SyleniumApi.Models.Entities.Ledger", b =>
@@ -80,11 +92,17 @@ namespace SyleniumApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("LedgerId"));
 
-                    b.Property<string>("Name")
+                    b.Property<int>("JournalId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LedgerName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("LedgerId");
+
+                    b.HasIndex("JournalId");
 
                     b.ToTable("Ledger");
                 });
@@ -97,20 +115,21 @@ namespace SyleniumApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TransactionId"));
 
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("Cleared")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("FinancialAccountId")
-                        .HasColumnType("integer");
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<decimal>("Inflow")
                         .HasColumnType("numeric");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
 
                     b.Property<decimal>("Outflow")
                         .HasColumnType("numeric");
@@ -123,7 +142,7 @@ namespace SyleniumApi.Migrations
 
                     b.HasKey("TransactionId");
 
-                    b.HasIndex("FinancialAccountId");
+                    b.HasIndex("AccountId");
 
                     b.HasIndex("TransactionCategoryId");
 
@@ -140,24 +159,20 @@ namespace SyleniumApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TransactionCategoryId"));
 
-                    b.Property<int>("LedgerId")
+                    b.Property<int?>("ParentCategoryId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("TransactionCategoryName")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int?>("ParentCategoryTransactionCategoryId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("integer");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("TransactionCategoryId");
 
-                    b.HasIndex("LedgerId");
+                    b.HasIndex("ParentCategoryId");
 
-                    b.HasIndex("ParentCategoryTransactionCategoryId");
+                    b.HasIndex("TransactionCategoryName", "ParentCategoryId")
+                        .IsUnique();
 
                     b.ToTable("TransactionCategory");
                 });
@@ -170,44 +185,45 @@ namespace SyleniumApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VendorId"));
 
-                    b.Property<int>("LedgerId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
+                    b.Property<string>("VendorName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("VendorId");
-
-                    b.HasIndex("LedgerId");
 
                     b.ToTable("Vendor");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialAccount", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialCategory", b =>
                 {
-                    b.HasOne("SyleniumApi.Models.Entities.FinancialAccountType", "FinancialAccountType")
-                        .WithMany("FinancialAccounts")
-                        .HasForeignKey("FinancialAccountTypeId")
+                    b.HasOne("SyleniumApi.Models.Entities.Journal", "Journal")
+                        .WithMany()
+                        .HasForeignKey("JournalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SyleniumApi.Models.Entities.Ledger", "Ledger")
-                        .WithMany("FinancialAccounts")
-                        .HasForeignKey("LedgerId")
+                    b.Navigation("Journal");
+                });
+
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Ledger", b =>
+                {
+                    b.HasOne("SyleniumApi.Models.Entities.Journal", "Journal")
+                        .WithMany()
+                        .HasForeignKey("JournalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("FinancialAccountType");
-
-                    b.Navigation("Ledger");
+                    b.Navigation("Journal");
                 });
 
             modelBuilder.Entity("SyleniumApi.Models.Entities.Transaction", b =>
                 {
-                    b.HasOne("SyleniumApi.Models.Entities.FinancialAccount", "FinancialAccount")
-                        .WithMany()
-                        .HasForeignKey("FinancialAccountId");
+                    b.HasOne("SyleniumApi.Models.Entities.Account", "Account")
+                        .WithMany("Transactions")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("SyleniumApi.Models.Entities.TransactionCategory", "TransactionCategory")
                         .WithMany("Transactions")
@@ -217,7 +233,7 @@ namespace SyleniumApi.Migrations
                         .WithMany("Transactions")
                         .HasForeignKey("VendorId");
 
-                    b.Navigation("FinancialAccount");
+                    b.Navigation("Account");
 
                     b.Navigation("TransactionCategory");
 
@@ -226,44 +242,16 @@ namespace SyleniumApi.Migrations
 
             modelBuilder.Entity("SyleniumApi.Models.Entities.TransactionCategory", b =>
                 {
-                    b.HasOne("SyleniumApi.Models.Entities.Ledger", "Ledger")
-                        .WithMany("TransactionCategories")
-                        .HasForeignKey("LedgerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("SyleniumApi.Models.Entities.TransactionCategory", "ParentCategory")
                         .WithMany("SubCategories")
-                        .HasForeignKey("ParentCategoryTransactionCategoryId");
-
-                    b.Navigation("Ledger");
+                        .HasForeignKey("ParentCategoryId");
 
                     b.Navigation("ParentCategory");
                 });
 
-            modelBuilder.Entity("SyleniumApi.Models.Entities.Vendor", b =>
+            modelBuilder.Entity("SyleniumApi.Models.Entities.Account", b =>
                 {
-                    b.HasOne("SyleniumApi.Models.Entities.Ledger", "Ledger")
-                        .WithMany("Vendors")
-                        .HasForeignKey("LedgerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Ledger");
-                });
-
-            modelBuilder.Entity("SyleniumApi.Models.Entities.FinancialAccountType", b =>
-                {
-                    b.Navigation("FinancialAccounts");
-                });
-
-            modelBuilder.Entity("SyleniumApi.Models.Entities.Ledger", b =>
-                {
-                    b.Navigation("FinancialAccounts");
-
-                    b.Navigation("TransactionCategories");
-
-                    b.Navigation("Vendors");
+                    b.Navigation("Transactions");
                 });
 
             modelBuilder.Entity("SyleniumApi.Models.Entities.TransactionCategory", b =>

@@ -12,7 +12,7 @@ namespace SyleniumApi.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Produces("application/json")]
-    public class TransactionsController(SyleniumContext context, ILogger<TransactionsController> logger)
+    public class TransactionsController(SyleniumDbContext dbContext, ILogger<TransactionsController> logger)
         : ControllerBase
     {
         // GET: /Transactions
@@ -24,7 +24,7 @@ namespace SyleniumApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<GetTransactionDto>>> GetTransactions()
         {
-            return await context
+            return await dbContext
                 .Transactions
                 .OrderByDescending(t => t.Date)
                 .ThenBy(t => t.TransactionId)
@@ -52,7 +52,7 @@ namespace SyleniumApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<GetTransactionDto>> GetTransaction(int id)
         {
-            var transaction = await context.Transactions.FindAsync(id);
+            var transaction = await dbContext.Transactions.FindAsync(id);
 
             if (transaction == null)
             {
@@ -93,8 +93,8 @@ namespace SyleniumApi.Controllers
                 return BadRequest();
             }
 
-            var transaction = await context.Transactions.FindAsync(id);
-            var category = await context.TransactionCategories.FindAsync(transactionDto.TransactionCategoryId);
+            var transaction = await dbContext.Transactions.FindAsync(id);
+            var category = await dbContext.TransactionCategories.FindAsync(transactionDto.TransactionCategoryId);
             if (transaction == null || category == null)
             {
                 return NotFound();
@@ -107,11 +107,11 @@ namespace SyleniumApi.Controllers
             transaction.Cleared = transactionDto.Cleared;
             transaction.TransactionCategoryId = transactionDto.TransactionCategoryId;
 
-            context.Entry(transaction).State = EntityState.Modified;
+            dbContext.Entry(transaction).State = EntityState.Modified;
 
             try
             {
-                await context.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -143,7 +143,7 @@ namespace SyleniumApi.Controllers
             try
             {
                 // Verify account ID
-                var account = await context.Accounts.FindAsync(newTransactionDto.AccountId);
+                var account = await dbContext.Accounts.FindAsync(newTransactionDto.AccountId);
                 if (account == null)
                 {
                     return BadRequest();
@@ -163,8 +163,8 @@ namespace SyleniumApi.Controllers
 
                 logger.LogInformation($"Posting transaction {newTransaction}");
 
-                context.Transactions.Add(newTransaction);
-                await context.SaveChangesAsync();
+                dbContext.Transactions.Add(newTransaction);
+                await dbContext.SaveChangesAsync();
 
                 return CreatedAtAction("GetTransaction", new { id = newTransaction.TransactionId }, newTransaction);
             }
@@ -187,21 +187,21 @@ namespace SyleniumApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteTransaction(int id)
         {
-            var transaction = await context.Transactions.FindAsync(id);
+            var transaction = await dbContext.Transactions.FindAsync(id);
             if (transaction == null)
             {
                 return NotFound();
             }
 
-            context.Transactions.Remove(transaction);
-            await context.SaveChangesAsync();
+            dbContext.Transactions.Remove(transaction);
+            await dbContext.SaveChangesAsync();
 
             return NoContent();
         }
 
         private bool TransactionExists(int id)
         {
-            return context.Transactions.Any(e => e.TransactionId == id);
+            return dbContext.Transactions.Any(e => e.TransactionId == id);
         }
     }
 }

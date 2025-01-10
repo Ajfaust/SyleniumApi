@@ -12,12 +12,12 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder().Build();
 
-    public SyleniumContext Context { get; private set; } = null!;
+    public SyleniumDbContext DbContext { get; private set; } = null!;
     
     public async Task InitializeAsync()
     { 
         await _container.StartAsync();
-        Context = Services.CreateScope().ServiceProvider.GetRequiredService<SyleniumContext>();
+        DbContext = Services.CreateScope().ServiceProvider.GetRequiredService<SyleniumDbContext>();
     }
 
     public new async Task DisposeAsync()
@@ -29,12 +29,12 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
     {
         builder.ConfigureTestServices(services =>
         {
-            services.RemoveDbContext<SyleniumContext>();
-            services.AddDbContext<SyleniumContext>(options =>
+            services.RemoveDbContext<SyleniumDbContext>();
+            services.AddDbContext<SyleniumDbContext>(options =>
             {
                 options.UseNpgsql(_container.GetConnectionString());
             });
-            services.EnsureDbCreated<SyleniumContext>();
+            services.EnsureDbCreated<SyleniumDbContext>();
         });
     }
 }

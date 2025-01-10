@@ -12,7 +12,7 @@ namespace SyleniumApi.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Produces("application/json")]
-    public class CategoriesController(SyleniumContext context, ILogger<CategoriesController> logger)
+    public class CategoriesController(SyleniumDbContext dbContext, ILogger<CategoriesController> logger)
         : ControllerBase
     {
         // GET: /Categories
@@ -24,7 +24,7 @@ namespace SyleniumApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<GetTransactionCategoryDto>>> GetTransactionCategories()
         {
-            return await context
+            return await dbContext
                 .TransactionCategories
                 .Include(c => c.SubCategories)
                 .Where(c => c.ParentCategory == null)   // Exclude any subcategories as they are included in the line above
@@ -52,7 +52,7 @@ namespace SyleniumApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<GetTransactionCategoryDto>> GetTransactionCategory(int id)
         {
-            var transactionCategory = await context.TransactionCategories.Include(c => c.SubCategories).FirstOrDefaultAsync(c => c.TransactionCategoryId == id);
+            var transactionCategory = await dbContext.TransactionCategories.Include(c => c.SubCategories).FirstOrDefaultAsync(c => c.TransactionCategoryId == id);
 
             if (transactionCategory == null)
             {
@@ -86,7 +86,7 @@ namespace SyleniumApi.Controllers
                 return BadRequest();
             }
 
-            var category = await context.TransactionCategories.FindAsync(id);
+            var category = await dbContext.TransactionCategories.FindAsync(id);
             if (category == null)
             {
                 return NotFound();
@@ -95,11 +95,11 @@ namespace SyleniumApi.Controllers
             category.TransactionCategoryName = updatedTransactionCategory.Name;
             category.ParentCategoryId = updatedTransactionCategory.ParentId;
 
-            context.Entry(category).State = EntityState.Modified;
+            dbContext.Entry(category).State = EntityState.Modified;
 
             try
             {
-                await context.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -137,8 +137,8 @@ namespace SyleniumApi.Controllers
                     Transactions = []
                 };
 
-                context.TransactionCategories.Add(newCategory);
-                await context.SaveChangesAsync();
+                dbContext.TransactionCategories.Add(newCategory);
+                await dbContext.SaveChangesAsync();
 
                 return CreatedAtAction("GetTransactionCategory", new { id = newCategory.TransactionCategoryId, name = newCategory.TransactionCategoryName }, transactionCategory);
             }
@@ -158,21 +158,21 @@ namespace SyleniumApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTransactionCategory(int id)
         {
-            var transactionCategory = await context.TransactionCategories.FindAsync(id);
+            var transactionCategory = await dbContext.TransactionCategories.FindAsync(id);
             if (transactionCategory == null)
             {
                 return NotFound();
             }
 
-            context.TransactionCategories.Remove(transactionCategory);
-            await context.SaveChangesAsync();
+            dbContext.TransactionCategories.Remove(transactionCategory);
+            await dbContext.SaveChangesAsync();
 
             return NoContent();
         }
 
         private bool TransactionCategoryExists(int id)
         {
-            return context.TransactionCategories.Any(e => e.TransactionCategoryId == id);
+            return dbContext.TransactionCategories.Any(e => e.TransactionCategoryId == id);
         }
     }
 }

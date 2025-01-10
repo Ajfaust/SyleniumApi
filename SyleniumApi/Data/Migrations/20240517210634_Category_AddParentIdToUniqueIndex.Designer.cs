@@ -11,9 +11,9 @@ using SyleniumApi.DbContexts;
 
 namespace SyleniumApi.Migrations
 {
-    [DbContext(typeof(SyleniumContext))]
-    [Migration("20240516204551_Categories_MakeNameUnique")]
-    partial class Categories_MakeNameUnique
+    [DbContext(typeof(SyleniumDbContext))]
+    [Migration("20240517210634_Category_AddParentIdToUniqueIndex")]
+    partial class Category_AddParentIdToUniqueIndex
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -127,10 +127,10 @@ namespace SyleniumApi.Migrations
 
                     b.HasKey("TransactionCategoryId");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
-
                     b.HasIndex("ParentCategoryId");
+
+                    b.HasIndex("Name", "ParentCategoryId")
+                        .IsUnique();
 
                     b.ToTable("TransactionCategory");
                 });
