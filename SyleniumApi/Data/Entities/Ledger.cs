@@ -13,4 +13,7 @@ public class Ledger
     [Required]
     [MaxLength(200)]
     public required string LedgerName { get; set; }
+    
+    [Required]
+    public required DateTime CreatedDate { get; set; }
 }

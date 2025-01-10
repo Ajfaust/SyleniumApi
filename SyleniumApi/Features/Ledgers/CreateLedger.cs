@@ -38,6 +38,7 @@ public static class CreateLedger
             var ledger = new Ledger
             {
                 LedgerName = request.LedgerName,
+                CreatedDate = DateTime.UtcNow,
             };
 
             context.Ledgers.Add(ledger);
