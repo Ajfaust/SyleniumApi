@@ -1,10 +1,9 @@
 using System.Reflection;
-using System.Text.Json.Serialization;
+using Carter;
+using FluentValidation;
 using SyleniumApi.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using SyleniumApi.Interfaces;
-using SyleniumApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var myPolicy = "MyPolicy";
@@ -24,15 +23,25 @@ builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Confi
 
 // Add services to the container.
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-    });
+// builder.Services.AddControllers()
+//     .AddJsonOptions(options =>
+//     {
+//         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+//     });
 // builder.Services.AddDbContext<SyleniumContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
 
-builder.Services.AddScoped<IJournalService, JournalService>();
-builder.Services.AddDbContext<SyleniumDbContext>(options => options.UseNpgsql("Host=192.168.39.15;Port=5432;Database=sylenium;Username=syleniumdev;Password=syldev"));
+var assembly = typeof(Program).Assembly;
+
+builder.Services.AddMediatR(config =>
+    config.RegisterServicesFromAssembly(assembly)
+);
+
+builder.Services.AddCarter();
+
+builder.Services.AddValidatorsFromAssembly(assembly);
+
+// builder.Services.AddScoped<IJournalService, JournalService>();
+builder.Services.AddDbContext<SyleniumDbContext>(options => options.UseNpgsql("Host=192.168.39.15;Port=8432;Database=syleniumdev;Username=syleniumdev;Password=syldev"));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -55,11 +64,9 @@ app.UseCors(myPolicy);
 
 app.UseSerilogRequestLogging();
 
+app.MapCarter();
+
 app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
 
 app.Run();
 

@@ -13,13 +13,4 @@ public class FinancialCategory
     [Required]
     [MaxLength(200)]
     public required string FinancialCategoryName { get; set; }
-    
-    #region Journal Relation
-    
-    [Required]
-    public int JournalId { get; set; }
-    
-    public virtual required Journal Journal { get; set; }
-    
-    #endregion
 }

@@ -1,8 +1,7 @@
-namespace SyleniumApi.Models.Dtos;
+namespace SyleniumApi.Contracts;
 
-public class LedgerDto
+public class LedgerResponse
 {
     public int LedgerId { get; set; }
-    
     public string LedgerName { get; set; } = string.Empty;
 }
