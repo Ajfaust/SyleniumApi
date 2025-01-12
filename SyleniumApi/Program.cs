@@ -41,7 +41,7 @@ builder.Services.AddCarter();
 builder.Services.AddValidatorsFromAssembly(assembly);
 
 // builder.Services.AddScoped<IJournalService, JournalService>();
-builder.Services.AddDbContext<SyleniumDbContext>(options => options.UseNpgsql("Host=192.168.39.15;Port=8432;Database=syleniumdev;Username=syleniumdev;Password=syldev"));
+builder.Services.AddDbContext<SyleniumDbContext>(options => options.UseNpgsql("Host=localhost;Port=8432;Database=syleniumdev;Username=syleniumdev;Password=syldev"));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

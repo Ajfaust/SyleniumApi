@@ -5,17 +5,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SyleniumApi.DbContexts;
 using Testcontainers.PostgreSql;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Tests;
 
-public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public class IntegrationTestFactory(ILogger logger) : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder().Build();
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
+        .WithImage("postgres:latest")
+        .WithLogger()
+        .Build();
 
     public SyleniumDbContext DbContext { get; private set; } = null!;
-    
+
     public async Task InitializeAsync()
-    { 
+    {
         await _container.StartAsync();
         DbContext = Services.CreateScope().ServiceProvider.GetRequiredService<SyleniumDbContext>();
     }
@@ -45,16 +49,13 @@ public static class ServiceCollectionExtensions
     {
         var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<T>));
         if (descriptor != null)
-        {
             services.Remove(descriptor);
-        }
     }
-    
+
     public static void EnsureDbCreated<T>(this IServiceCollection services) where T : DbContext
     {
         using var scope = services.BuildServiceProvider().CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<T>();
-        context.Database.Migrate();
         context.Database.EnsureCreated();
     }
 }

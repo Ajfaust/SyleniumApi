@@ -10,21 +10,23 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AutoFixture" Version="4.18.1" />
+        <PackageReference Include="AutoFixture" Version="4.18.1"/>
+        <PackageReference Include="AutoFixture.Xunit2" Version="4.18.1"/>
         <PackageReference Include="coverlet.collector" Version="6.0.3">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="9.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
-        <PackageReference Include="Testcontainers.PostgreSql" Version="4.1.0" />
-        <PackageReference Include="xunit" Version="2.9.3" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="9.0.0"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
+        <PackageReference Include="Testcontainers.PostgreSql" Version="4.1.0"/>
+        <PackageReference Include="xunit" Version="2.9.3"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="3.0.1">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
 
@@ -33,7 +35,15 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\SyleniumApi\SyleniumApi.csproj" />
+        <ProjectReference Include="..\SyleniumApi\SyleniumApi.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Update="appsettings.json">
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
     </ItemGroup>
 
 </Project>

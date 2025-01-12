@@ -9,11 +9,17 @@ public class Ledger
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int LedgerId { get; set; }
-    
+
     [Required]
     [MaxLength(200)]
     public required string LedgerName { get; set; }
-    
+
     [Required]
     public required DateTime CreatedDate { get; set; }
+
+    #region Account Relation
+
+    public virtual ICollection<FinancialAccount> FinancialAccounts { get; set; } = new List<FinancialAccount>();
+
+    #endregion
 }
