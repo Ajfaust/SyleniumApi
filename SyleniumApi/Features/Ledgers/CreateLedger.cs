@@ -2,56 +2,47 @@ using Carter;
 using FluentResults;
 using FluentValidation;
 using MediatR;
-using SyleniumApi.Contracts;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
 
 namespace SyleniumApi.Features.Ledgers;
 
-public static class CreateLedger
+public record CreateLedgerCommand(string Name) : IRequest<Result<CreateLedgerResponse>>;
+
+public record CreateLedgerResponse(int Id, string Name);
+
+public class CreateLedgerValidator : AbstractValidator<CreateLedgerCommand>
 {
-    public class Request : IRequest<Result<LedgerResponse>>
+    public CreateLedgerValidator()
     {
-        public string LedgerName { get; set; } = string.Empty;
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
     }
+}
 
-    public class Validator : AbstractValidator<Request>
+public class CreateLedgerHandler(SyleniumDbContext context, IValidator<CreateLedgerCommand> validator) : IRequestHandler<CreateLedgerCommand, Result<CreateLedgerResponse>>
+{
+    public async Task<Result<CreateLedgerResponse>> Handle(CreateLedgerCommand request, CancellationToken cancellationToken)
     {
-        public Validator()
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
         {
-            RuleFor(r => r.LedgerName)
-                .NotEmpty()
-                .MaximumLength(200);
+            return Result.Fail(validationResult.Errors.Select(e => e.ErrorMessage));
         }
-    }
-
-    internal sealed class Handler(SyleniumDbContext context, IValidator<Request> validator) : IRequestHandler<Request, Result<LedgerResponse>>
-    {
-        public async Task<Result<LedgerResponse>> Handle(Request request, CancellationToken cancellationToken)
+        
+        var entity = new Ledger
         {
-            var validationResult = await validator.ValidateAsync(request, cancellationToken);
-            if (!validationResult.IsValid)
-            {
-                return Result.Fail(validationResult.Errors.Select(e => e.ErrorMessage));
-            }
-            
-            var ledger = new Ledger
-            {
-                LedgerName = request.LedgerName,
-                CreatedDate = DateTime.UtcNow,
-            };
+            LedgerName = request.Name,
+            CreatedDate = DateTime.UtcNow,
+        };
 
-            context.Ledgers.Add(ledger);
-            await context.SaveChangesAsync(cancellationToken);
+        context.Ledgers.Add(entity);
 
-            var response = new LedgerResponse()
-            {
-                LedgerId = ledger.LedgerId,
-                LedgerName = ledger.LedgerName,
-            };
+        await context.SaveChangesAsync(cancellationToken);
 
-            return Result.Ok(response);
-        }
+        var response = new CreateLedgerResponse(Id: entity.LedgerId, Name: entity.LedgerName);
+
+        return Result.Ok(response);
     }
 }
 
@@ -59,13 +50,11 @@ public class CreateLedgerEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("api/ledgers", async (CreateLedgerRequest request, ISender sender) =>
+        app.MapPost("/api/ledgers", async (CreateLedgerCommand req, ISender sender) =>
         {
-            var command = request.MapCreateLedgerRequest();
-            
-            var result = await sender.Send(command);
-                
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result);
+            var result = await sender.Send(req);
+
+            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result.Value);
         });
     }
 }

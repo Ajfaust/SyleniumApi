@@ -1,49 +1,64 @@
 using Carter;
 using FluentResults;
+using FluentValidation;
 using MediatR;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Features.FinancialAccountCategories.Contracts;
 
 namespace SyleniumApi.Features.FinancialAccountCategories;
 
-public class CreateFaCategory
+public record CreateFaCategoryCommand(string Name, FinancialCategoryType Type)
+    : IRequest<Result<CreateFaCategoryResponse>>;
+
+public record CreateFaCategoryResponse(int Id, string Name, FinancialCategoryType Type);
+
+public class CreateFaCategoryValidator : AbstractValidator<CreateFaCategoryCommand>
 {
-    public class Request : IRequest<Result<FaCategoryResponse>>
+    public CreateFaCategoryValidator()
     {
-        public string CategoryName { get; set; } = string.Empty;
-        public FinancialCategoryType CategoryType { get; set; }
-    }
-
-    internal sealed class Handler(SyleniumDbContext context) : IRequestHandler<Request, Result<FaCategoryResponse>>
-    {
-        public async Task<Result<FaCategoryResponse>> Handle(Request request, CancellationToken cancellationToken)
-        {
-            var category = new FinancialAccountCategory
-            {
-                FinancialAccountCategoryName = request.CategoryName,
-                FinancialCategoryType = request.CategoryType,
-            };
-
-            context.FinancialAccountCategories.Add(category);
-            await context.SaveChangesAsync(cancellationToken);
-
-            return Result.Ok();
-        }
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Type).IsInEnum();
     }
 }
 
-public class CreateFinancialAccountCategoryEndpoint : ICarterModule
+public class CreateFaCategoryHandler(SyleniumDbContext context, IValidator<CreateFaCategoryCommand> validator)
+    : IRequestHandler<CreateFaCategoryCommand, Result<CreateFaCategoryResponse>>
+{
+    public async Task<Result<CreateFaCategoryResponse>> Handle(CreateFaCategoryCommand request,
+        CancellationToken cancellationToken)
+    {
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid) return Result.Fail(validationResult.Errors.Select(e => e.ErrorMessage));
+
+        var entity = new FinancialAccountCategory
+        {
+            FinancialAccountCategoryName = request.Name,
+            FinancialCategoryType = request.Type
+        };
+
+        context.FinancialAccountCategories.Add(entity);
+
+        await context.SaveChangesAsync(cancellationToken);
+
+        var response = new CreateFaCategoryResponse(
+            entity.FinancialAccountCategoryId,
+            entity.FinancialAccountCategoryName,
+            entity.FinancialCategoryType
+        );
+
+        return Result.Ok(response);
+    }
+}
+
+public class CreateFaCategoryEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/fa_categories", async (CreateFaCategoryRequest req, ISender sender) =>
+        app.MapPost("/api/fa-categories", async (CreateFaCategoryCommand req, ISender sender) =>
         {
-            var command = req.MapCreateFaCategoryRequest();
+            var result = await sender.Send(req);
 
-            var result = await sender.Send(command);
-            
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result);
+            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result.Value);
         });
     }
 }

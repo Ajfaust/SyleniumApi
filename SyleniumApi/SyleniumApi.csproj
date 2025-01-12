@@ -59,10 +59,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Shared\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Update="@(Content)">
       <Visible Condition="'%(NuGetItemType)' == 'Content'">false</Visible>
     </Content>

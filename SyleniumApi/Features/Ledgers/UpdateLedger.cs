@@ -3,58 +3,48 @@ using FluentResults;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using SyleniumApi.Contracts;
 using SyleniumApi.DbContexts;
 
 namespace SyleniumApi.Features.Ledgers;
 
-public static class UpdateLedger
+public record UpdateLedgerCommand(int Id, string LedgerName) : IRequest<Result<UpdateLedgerResponse>>;
+
+public record UpdateLedgerResponse(int Id, string LedgerName);
+
+public class UpdateLedgerValidator : AbstractValidator<UpdateLedgerCommand>
 {
-    public class Request : IRequest<Result<LedgerResponse>>
+    public UpdateLedgerValidator()
     {
-        public int LedgerId { get; set; }
-        public string LedgerName { get; set; } = string.Empty;
+        RuleFor(x => x.LedgerName).NotEmpty().MaximumLength(200);
     }
+}
 
-    public class Validator : AbstractValidator<Request>
+public class UpdateLedgerHandler(SyleniumDbContext context, IValidator<UpdateLedgerCommand> validator) : IRequestHandler<UpdateLedgerCommand, Result<UpdateLedgerResponse>>
+{
+    public async Task<Result<UpdateLedgerResponse>> Handle(UpdateLedgerCommand request, CancellationToken cancellationToken)
     {
-        public Validator()
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
         {
-            RuleFor(r => r.LedgerName)
-                .NotEmpty()
-                .MaximumLength(200);
+            return Result.Fail(validationResult.Errors.Select(e => e.ErrorMessage));
         }
-    }
+        
+        var entity = await context.Ledgers.FindAsync(request.Id);
 
-    internal sealed class Handler(SyleniumDbContext context, IValidator<Request> validator) : IRequestHandler<Request, Result<LedgerResponse>>
-    {
-        public async Task<Result<LedgerResponse>> Handle(Request request, CancellationToken cancellationToken)
+        if (entity is null)
         {
-            var validationResult = await validator.ValidateAsync(request, cancellationToken);
-            if (!validationResult.IsValid)
-            {
-                return Result.Fail(validationResult.Errors.Select(e => e.ErrorMessage));
-            }
-            
-            var ledger = await context.Ledgers.FindAsync(request.LedgerId, cancellationToken);
-            if (ledger == null)
-            {
-                return Result.Fail<LedgerResponse>($"Ledger with id {request.LedgerId} not found");
-            }
-            
-            ledger.LedgerName = request.LedgerName;
-            
-            context.Entry(ledger).State = EntityState.Modified;
-            await context.SaveChangesAsync(cancellationToken);
-
-            var response = new LedgerResponse()
-            {
-                LedgerId = ledger.LedgerId,
-                LedgerName = ledger.LedgerName,
-            };
-
-            return Result.Ok(response);
+            return Result.Fail($"Ledger {request.Id} not found");
         }
+
+        entity.LedgerName = request.LedgerName;
+
+        context.Entry(entity).State = EntityState.Modified;
+        await context.SaveChangesAsync(cancellationToken);
+
+        var response = new UpdateLedgerResponse(Id: entity.LedgerId, LedgerName: entity.LedgerName);
+
+        return Result.Ok(response);
     }
 }
 
@@ -62,13 +52,11 @@ public class UpdateLedgerEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut("api/ledgers", async (UpdateLedgerRequest request, ISender sender) =>
+        app.MapPut("/api/ledgers/{id:int}", async (int id, UpdateLedgerCommand req, ISender sender) =>
         {
-            var command = request.MapUpdateLedgerRequest();
-            
-            var result = await sender.Send(command);
-                
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result);
+            var result = await sender.Send(req);
+
+            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result.Value);
         });
     }
 }
