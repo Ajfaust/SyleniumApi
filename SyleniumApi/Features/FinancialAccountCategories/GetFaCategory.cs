@@ -1,8 +1,9 @@
-using Carter;
 using FluentResults;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Shared;
 
 namespace SyleniumApi.Features.FinancialAccountCategories;
 
@@ -17,7 +18,8 @@ public class GetFaCategoryHandler(SyleniumDbContext context)
         CancellationToken cancellationToken)
     {
         var faCategory = await context.FinancialAccountCategories.FindAsync(request.Id);
-        if (faCategory is null) return Result.Fail($"Financial Account Category {request.Id} not found");
+        if (faCategory is null)
+            return new EntityNotFoundError($"Financial Account Category {request.Id} not found");
 
         var response = new GetFaCategoryResponse(faCategory.FinancialAccountCategoryId,
             faCategory.FinancialAccountCategoryName, faCategory.FinancialCategoryType);
@@ -26,17 +28,16 @@ public class GetFaCategoryHandler(SyleniumDbContext context)
     }
 }
 
-public class GetFaCategoryEndpoint : ICarterModule
+public partial class FaCategoriesController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    [HttpGet("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetFaCategory(int id, ISender sender)
     {
-        app.MapGet("/api/fa-categories/{id:int}", async (int id, ISender sender) =>
-        {
-            var command = new GetFaCategoryRequest(id);
+        var request = new GetFaCategoryRequest(id);
+        var result = await sender.Send(request);
 
-            var result = await sender.Send(command);
-
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result.Value);
-        });
+        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
     }
 }

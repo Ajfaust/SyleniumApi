@@ -1,10 +1,10 @@
-using Carter;
 using FluentResults;
 using FluentValidation;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Shared;
 
 namespace SyleniumApi.Features.FinancialAccountCategories;
 
@@ -22,40 +22,53 @@ public class UpdateFaCategoryValidator : AbstractValidator<UpdateFaCategoryComma
     }
 }
 
-public class UpdateFaCategoryHandler(SyleniumDbContext context)
+public class UpdateFaCategoryHandler(SyleniumDbContext context, IValidator<UpdateFaCategoryCommand> validator)
     : IRequestHandler<UpdateFaCategoryCommand, Result<UpdateFaCategoryResponse>>
 {
-    public async Task<Result<UpdateFaCategoryResponse>> Handle(UpdateFaCategoryCommand request,
+    public async Task<Result<UpdateFaCategoryResponse>> Handle(UpdateFaCategoryCommand command,
         CancellationToken cancellationToken)
     {
-        var entity = await context.FinancialAccountCategories.FindAsync(request.Id);
-        if (entity is null) return Result.Fail($"Financial Account Category {request.Id} not found");
+        var validationResult = await validator.ValidateAsync(command, cancellationToken);
+        if (!validationResult.IsValid)
+            return new ValidationError("One or more properties are invalid");
 
-        entity.FinancialAccountCategoryName = request.Name;
-        entity.FinancialCategoryType = request.Type;
+        var category = await context.FinancialAccountCategories.FindAsync(command.Id);
+        if (category is null)
+            return new EntityNotFoundError($"Financial Account Category {command.Id} not found");
 
-        context.Entry(entity).State = EntityState.Modified;
+        category.FinancialAccountCategoryName = command.Name;
+        category.FinancialCategoryType = command.Type;
+
+        context.FinancialAccountCategories.Update(category);
         await context.SaveChangesAsync(cancellationToken);
 
         var response = new UpdateFaCategoryResponse(
-            entity.FinancialAccountCategoryId,
-            entity.FinancialAccountCategoryName,
-            entity.FinancialCategoryType
+            category.FinancialAccountCategoryId,
+            category.FinancialAccountCategoryName,
+            category.FinancialCategoryType
         );
 
         return Result.Ok(response);
     }
 }
 
-public class UpdateFaCategoryEndpoint : ICarterModule
+public partial class FaCategoriesController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    [HttpPut("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateFaCategory(int id, [FromBody] UpdateFaCategoryCommand command,
+        ISender sender)
     {
-        app.MapPut("/api/fa-categories/{id:int}", async (UpdateFaCategoryCommand req, ISender sender) =>
-        {
-            var result = await sender.Send(req);
+        if (id != command.Id)
+            return BadRequest("Id mismatch");
 
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result.Value);
-        });
+        var result = await sender.Send(command);
+
+        if (result.HasError<ValidationError>())
+            return BadRequest(result.Errors);
+
+        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
     }
 }

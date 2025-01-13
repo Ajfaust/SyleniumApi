@@ -1,7 +1,8 @@
-using Carter;
 using FluentResults;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Shared;
 
 namespace SyleniumApi.Features.FinancialAccountCategories;
 
@@ -12,7 +13,8 @@ public class DeleteFaCategoryHandler(SyleniumDbContext context) : IRequestHandle
     public async Task<Result> Handle(DeleteFaCategoryRequest request, CancellationToken cancellationToken)
     {
         var category = await context.FinancialAccountCategories.FindAsync(request.Id);
-        if (category is null) return Result.Fail($"Category {request.Id} not found");
+        if (category is null)
+            return new EntityNotFoundError($"Category {request.Id} not found");
 
         context.FinancialAccountCategories.Remove(category);
         await context.SaveChangesAsync(cancellationToken);
@@ -21,17 +23,16 @@ public class DeleteFaCategoryHandler(SyleniumDbContext context) : IRequestHandle
     }
 }
 
-public class DeleteFaCategoryEndpoint : ICarterModule
+public partial class FaCategoriesController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteFaCategory(int id, ISender sender)
     {
-        app.MapDelete("/api/fa-categories/{id:int}", async (int id, ISender sender) =>
-        {
-            var command = new DeleteFaCategoryRequest(id);
+        var request = new DeleteFaCategoryRequest(id);
+        var result = await sender.Send(request);
 
-            var result = await sender.Send(command);
-
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok();
-        });
+        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : NoContent();
     }
 }

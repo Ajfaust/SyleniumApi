@@ -1,9 +1,10 @@
-using Carter;
 using FluentResults;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Shared;
 
 namespace SyleniumApi.Features.FinancialAccountCategories;
 
@@ -28,7 +29,8 @@ public class CreateFaCategoryHandler(SyleniumDbContext context, IValidator<Creat
         CancellationToken cancellationToken)
     {
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid) return Result.Fail(validationResult.Errors.Select(e => e.ErrorMessage));
+        if (!validationResult.IsValid)
+            return new ValidationError("One or more properties are invalid");
 
         var entity = new FinancialAccountCategory
         {
@@ -50,15 +52,19 @@ public class CreateFaCategoryHandler(SyleniumDbContext context, IValidator<Creat
     }
 }
 
-public class CreateFaCategoryEndpoint : ICarterModule
+public partial class FaCategoriesController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<CreateFaCategoryResponse>> CreateFaCategory(
+        [FromBody] CreateFaCategoryCommand command,
+        ISender sender)
     {
-        app.MapPost("/api/fa-categories", async (CreateFaCategoryCommand req, ISender sender) =>
-        {
-            var result = await sender.Send(req);
+        var result = await sender.Send(command);
 
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result.Value);
-        });
+        return result.HasError<ValidationError>()
+            ? BadRequest(result.Errors)
+            : CreatedAtAction("GetFaCategory", new { id = result.Value.Id }, result.Value);
     }
 }
