@@ -2,8 +2,10 @@ using Carter;
 using FluentResults;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Shared;
 
 namespace SyleniumApi.Features.Ledgers;
 
@@ -27,14 +29,14 @@ public class UpdateLedgerHandler(SyleniumDbContext context, IValidator<UpdateLed
 
         if (!validationResult.IsValid)
         {
-            return Result.Fail(validationResult.Errors.Select(e => e.ErrorMessage));
+            return new ValidationError("One or more properties are invalid");
         }
         
         var entity = await context.Ledgers.FindAsync(request.Id);
 
         if (entity is null)
         {
-            return Result.Fail($"Ledger {request.Id} not found");
+            return new EntityNotFoundError($"Ledger {request.Id} not found");
         }
 
         entity.LedgerName = request.LedgerName;
@@ -48,15 +50,25 @@ public class UpdateLedgerHandler(SyleniumDbContext context, IValidator<UpdateLed
     }
 }
 
-public class UpdateLedgerEndpoint : ICarterModule
+public partial class LedgersController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    [HttpPut("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateLedger(int id, UpdateLedgerCommand command, ISender sender)
     {
-        app.MapPut("/api/ledgers/{id:int}", async (int id, UpdateLedgerCommand req, ISender sender) =>
-        {
-            var result = await sender.Send(req);
+        if (id != command.Id) {
+            return BadRequest("Id in the URL does not match the Id in the request body");
+        }
+        
+        var result = await sender.Send(command);
 
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result.Value);
-        });
+        if (result.HasError<ValidationError>())
+        {
+            return BadRequest(result.Errors);
+        }
+
+        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
     }
 }

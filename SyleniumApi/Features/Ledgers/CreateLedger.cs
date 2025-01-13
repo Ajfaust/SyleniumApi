@@ -1,7 +1,7 @@
-using Carter;
 using FluentResults;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
 using SyleniumApi.Shared;
@@ -23,17 +23,17 @@ public class CreateLedgerValidator : AbstractValidator<CreateLedgerCommand>
 public class CreateLedgerHandler(SyleniumDbContext context, IValidator<CreateLedgerCommand> validator)
     : IRequestHandler<CreateLedgerCommand, Result<CreateLedgerResponse>>
 {
-    public async Task<Result<CreateLedgerResponse>> Handle(CreateLedgerCommand request,
+    public async Task<Result<CreateLedgerResponse>> Handle(CreateLedgerCommand command,
         CancellationToken cancellationToken)
     {
-        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+        var validationResult = await validator.ValidateAsync(command, cancellationToken);
 
         if (!validationResult.IsValid)
             return new ValidationError("One or more properties are invalid");
 
         var entity = new Ledger
         {
-            LedgerName = request.Name,
+            LedgerName = command.Name,
             CreatedDate = DateTime.UtcNow
         };
 
@@ -47,15 +47,19 @@ public class CreateLedgerHandler(SyleniumDbContext context, IValidator<CreateLed
     }
 }
 
-public class CreateLedgerEndpoint : ICarterModule
+public partial class LedgersController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    // POST /api/ledgers
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<ActionResult<CreateLedgerResponse>> CreateLedger([FromBody] CreateLedgerCommand command,
+        ISender sender)
     {
-        app.MapPost("/api/ledgers", async (CreateLedgerCommand req, ISender sender) =>
-        {
-            var result = await sender.Send(req);
+        var result = await sender.Send(command);
 
-            return result.HasError<ValidationError>() ? Results.BadRequest(result.Errors) : Results.Ok(result.Value);
-        });
+        return result.HasError<ValidationError>()
+            ? BadRequest(result.Errors)
+            : CreatedAtAction("GetLedger", new { id = result.Value.Id }, result.Value);
     }
 }

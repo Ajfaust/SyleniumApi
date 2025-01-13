@@ -1,6 +1,7 @@
 using Carter;
 using FluentResults;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.DbContexts;
 
 namespace SyleniumApi.Features.Ledgers;
@@ -24,18 +25,14 @@ public class GetLedgerHandler(SyleniumDbContext context) : IRequestHandler<GetLe
         return Result.Ok(response);
     }
 }
-
-public class GetLedgerEndpoint : ICarterModule
+public partial class LedgersController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetLedger(int id, ISender sender)
     {
-        app.MapGet("/api/ledgers/{id:int}", async (int id, ISender sender) =>
-        {
-            var command = new GetLedgerRequest(Id: id);
+        var request = new GetLedgerRequest(id);
+        var result = await sender.Send(request);
 
-            var result = await sender.Send(command);
-
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result.Value);
-        });
+        return result.IsFailed ? NotFound(result.Errors) : Ok(result.Value);
     }
 }

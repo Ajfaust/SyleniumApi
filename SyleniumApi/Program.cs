@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json.Serialization;
 using Carter;
 using FluentValidation;
 using SyleniumApi.DbContexts;
@@ -23,12 +24,12 @@ builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Confi
 
 // Add services to the container.
 
-// builder.Services.AddControllers()
-//     .AddJsonOptions(options =>
-//     {
-//         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-//     });
-// builder.Services.AddDbContext<SyleniumContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
+builder.Services.AddDbContext<SyleniumDbContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
 
 var assembly = typeof(Program).Assembly;
 
@@ -36,12 +37,11 @@ builder.Services.AddMediatR(config =>
     config.RegisterServicesFromAssembly(assembly)
 );
 
-builder.Services.AddCarter();
+// builder.Services.AddCarter();
 
 builder.Services.AddValidatorsFromAssembly(assembly);
 
 // builder.Services.AddScoped<IJournalService, JournalService>();
-builder.Services.AddDbContext<SyleniumDbContext>(options => options.UseNpgsql("Host=localhost;Port=5432;Database=syleniumdev;Username=syleniumdev;Password=syldev"));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -64,7 +64,7 @@ app.UseCors(myPolicy);
 
 app.UseSerilogRequestLogging();
 
-app.MapCarter();
+app.MapControllers();
 
 app.UseHttpsRedirection();
 

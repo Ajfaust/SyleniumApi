@@ -9,11 +9,10 @@ using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Tests;
 
-public class IntegrationTestFactory(ILogger logger) : WebApplicationFactory<Program>, IAsyncLifetime
+public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
         .WithImage("postgres:latest")
-        .WithLogger()
         .Build();
 
     public SyleniumDbContext DbContext { get; private set; } = null!;

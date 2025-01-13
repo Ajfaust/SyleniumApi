@@ -1,6 +1,7 @@
 using Carter;
 using FluentResults;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.DbContexts;
 
 namespace SyleniumApi.Features.Ledgers;
@@ -25,17 +26,14 @@ public class DeleteLedgerHandler(SyleniumDbContext context) : IRequestHandler<De
     }
 }
 
-public class DeleteLedgerEndpoint : ICarterModule
+public partial class LedgersController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteLedger(int id, ISender sender)
     {
-        app.MapDelete("/api/ledgers/{id:int}", async (int id, ISender sender) =>
-        {
-            var command = new DeleteLedgerCommand(Id: id);
+        var command = new DeleteLedgerCommand(id);
+        var result = await sender.Send(command);
 
-            var result = await sender.Send(command);
-
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok();
-        });
+        return result.IsFailed ? BadRequest(result.Errors) : NoContent();
     }
 }
