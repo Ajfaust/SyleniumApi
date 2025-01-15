@@ -98,5 +98,13 @@ public static class ServiceCollectionExtensions
             VendorName = "Test Vendor"
         });
         context.SaveChanges();
+
+        context.TransactionCategories.Add(new TransactionCategory
+        {
+            LedgerId = DefaultTestValues.Id,
+            ParentCategoryId = null,
+            TransactionCategoryName = "Test Category"
+        });
+        context.SaveChanges();
     }
 }
