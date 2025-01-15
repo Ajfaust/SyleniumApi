@@ -8,7 +8,7 @@ using SyleniumApi.Shared;
 
 namespace SyleniumApi.Features.FinancialAccountCategories;
 
-public record CreateFaCategoryCommand(string Name, FinancialCategoryType Type)
+public record CreateFaCategoryCommand(int LedgerId, string Name, FinancialCategoryType Type)
     : IRequest<Result<CreateFaCategoryResponse>>;
 
 public record CreateFaCategoryResponse(int Id, string Name, FinancialCategoryType Type);
@@ -22,18 +22,28 @@ public class CreateFaCategoryValidator : AbstractValidator<CreateFaCategoryComma
     }
 }
 
-public class CreateFaCategoryHandler(SyleniumDbContext context, IValidator<CreateFaCategoryCommand> validator)
+public class CreateFaCategoryHandler(
+    SyleniumDbContext context,
+    IValidator<CreateFaCategoryCommand> validator,
+    ILogger<CreateFaCategoryHandler> logger)
     : IRequestHandler<CreateFaCategoryCommand, Result<CreateFaCategoryResponse>>
 {
+    private readonly ILogger<CreateFaCategoryHandler> _logger = logger;
+
     public async Task<Result<CreateFaCategoryResponse>> Handle(CreateFaCategoryCommand request,
         CancellationToken cancellationToken)
     {
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return new ValidationError("One or more properties are invalid");
+            return new ValidationError("Name and/or type are invalid");
+
+        var ledger = await context.Ledgers.FindAsync(request.LedgerId, cancellationToken);
+        if (ledger is null)
+            return new ValidationError("Ledger Id is invalid");
 
         var entity = new FinancialAccountCategory
         {
+            LedgerId = request.LedgerId,
             FinancialAccountCategoryName = request.Name,
             FinancialCategoryType = request.Type
         };

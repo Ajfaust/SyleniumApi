@@ -4,5 +4,5 @@ namespace SyleniumApi.Features.FinancialAccountCategories;
 
 [Produces("application/json")]
 [ApiController]
-[Route("/api/[controller]")]
+[Route("/api/fa-categories")]
 public partial class FaCategoriesController : ControllerBase;

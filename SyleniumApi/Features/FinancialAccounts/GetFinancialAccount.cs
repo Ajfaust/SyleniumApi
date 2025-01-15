@@ -1,7 +1,8 @@
-using Carter;
 using FluentResults;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Shared;
 
 namespace SyleniumApi.Features.FinancialAccounts;
 
@@ -18,7 +19,7 @@ public class GetFinancialAccountHandler(SyleniumDbContext context)
         var entity = await context.FinancialAccounts.FindAsync(request.Id);
 
         if (entity == null)
-            return Result.Fail<GetFinancialAccountResponse>("Financial account not found");
+            return new EntityNotFoundError("Financial account not found");
 
         var response = new GetFinancialAccountResponse(entity.FinancialAccountId, entity.FinancialAccountName);
 
@@ -26,16 +27,16 @@ public class GetFinancialAccountHandler(SyleniumDbContext context)
     }
 }
 
-public class GetFinancialAccountEndpoint : ICarterModule
+public partial class FinancialAccountsController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    [HttpGet("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetFinancialAccount(int id, ISender sender)
     {
-        app.MapGet("/api/financial-accounts/{id:int}", async (GetFinancialAccountQuery req, ISender sender) =>
-        {
-            var id = req.Id;
-            var result = await sender.Send(req);
+        var query = new GetFinancialAccountQuery(id);
+        var result = await sender.Send(query);
 
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok();
-        });
+        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
     }
 }

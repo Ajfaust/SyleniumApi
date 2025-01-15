@@ -3,11 +3,16 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
 using Testcontainers.PostgreSql;
-using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Tests;
+
+public static class DefaultTestValues
+{
+    public const int Id = 1;
+}
 
 public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
@@ -35,8 +40,9 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
             services.RemoveDbContext<SyleniumDbContext>();
             services.AddDbContext<SyleniumDbContext>(options =>
             {
-                options.UseNpgsql(_container.GetConnectionString());
+                options.UseNpgsql(_container.GetConnectionString() + ";Include Error Detail=true");
             });
+
             services.EnsureDbCreated<SyleniumDbContext>();
         });
     }
@@ -56,5 +62,35 @@ public static class ServiceCollectionExtensions
         using var scope = services.BuildServiceProvider().CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<T>();
         context.Database.EnsureCreated();
+
+        if (context is SyleniumDbContext syleniumDbContext)
+            SeedDatabase(syleniumDbContext);
+    }
+
+    private static void SeedDatabase(SyleniumDbContext context)
+    {
+        // Add one of each entity for foreign key constraints
+        context.Ledgers.Add(new Ledger
+        {
+            LedgerName = "Test Ledger",
+            CreatedDate = DateTime.UtcNow
+        });
+        context.SaveChanges();
+
+        context.FinancialAccountCategories.Add(new FinancialAccountCategory
+        {
+            LedgerId = DefaultTestValues.Id,
+            FinancialCategoryType = FinancialCategoryType.Asset,
+            FinancialAccountCategoryName = "Test Category"
+        });
+        context.SaveChanges();
+
+        context.FinancialAccounts.Add(new FinancialAccount
+        {
+            LedgerId = DefaultTestValues.Id,
+            FinancialAccountCategoryId = DefaultTestValues.Id,
+            FinancialAccountName = "Test Account"
+        });
+        context.SaveChanges();
     }
 }

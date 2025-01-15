@@ -1,9 +1,10 @@
-using Carter;
 using FluentResults;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Shared;
 
 namespace SyleniumApi.Features.FinancialAccounts;
 
@@ -32,7 +33,7 @@ public class
     {
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return Result.Fail(validationResult.Errors.Select(x => x.ErrorMessage));
+            return new ValidationError("One or more properties are invalid");
 
         var entity = new FinancialAccount
         {
@@ -56,15 +57,20 @@ public class
     }
 }
 
-public class CreateFinancialAccountEndpoint : ICarterModule
+public partial class FinancialAccountsController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    // POST /api/financial-accounts
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<ActionResult<CreateFinancialAccountResponse>> CreateFinancialAccount(
+        [FromBody] CreateFinancialAccountCommand command,
+        ISender sender)
     {
-        app.MapPost("/api/financial-accounts", async (CreateFinancialAccountCommand req, ISender sender) =>
-        {
-            var result = await sender.Send(req);
+        var result = await sender.Send(command);
 
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result.Value);
-        });
+        return result.HasError<ValidationError>()
+            ? BadRequest(result.Errors)
+            : CreatedAtAction("GetFinancialAccount", new { id = result.Value.Id }, result.Value);
     }
 }

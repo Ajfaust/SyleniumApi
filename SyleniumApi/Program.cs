@@ -1,23 +1,22 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
-using Carter;
 using FluentValidation;
-using SyleniumApi.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using SyleniumApi.DbContexts;
 
 var builder = WebApplication.CreateBuilder(args);
 var myPolicy = "MyPolicy";
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: myPolicy,
-                      policy =>
-                      {
-                          policy.AllowAnyOrigin();
-                          policy.AllowAnyMethod();
-                          policy.AllowAnyHeader();
-                      });
+    options.AddPolicy(myPolicy,
+        policy =>
+        {
+            policy.AllowAnyOrigin();
+            policy.AllowAnyMethod();
+            policy.AllowAnyHeader();
+        });
 });
 
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
@@ -25,11 +24,9 @@ builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Confi
 // Add services to the container.
 
 builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-    });
-builder.Services.AddDbContext<SyleniumDbContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
+    .AddJsonOptions(options => { options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; });
+builder.Services.AddDbContext<SyleniumDbContext>(opt =>
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
 
 var assembly = typeof(Program).Assembly;
 

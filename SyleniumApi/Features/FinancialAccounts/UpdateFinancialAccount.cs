@@ -1,9 +1,10 @@
-using Carter;
 using FluentResults;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Shared;
 
 namespace SyleniumApi.Features.FinancialAccounts;
 
@@ -30,11 +31,12 @@ public class UpdateFinancialAccountHandler(
     {
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return Result.Fail(validationResult.Errors.Select(x => x.ErrorMessage));
+            return new ValidationError("Validation error: ").CausedBy(
+                validationResult.Errors.Select(e => new Error(e.ErrorMessage)));
 
         var entity = await context.FinancialAccounts.FindAsync(request.Id);
         if (entity == null)
-            return Result.Fail<UpdateFinancialAccountResponse>("Financial account not found");
+            return new EntityNotFoundError("Financial account not found");
 
         entity.FinancialAccountName = request.Name;
 
@@ -47,15 +49,22 @@ public class UpdateFinancialAccountHandler(
     }
 }
 
-public class UpdateFinancialAccountEndpoint : ICarterModule
+public partial class FinancialAccountsController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    [HttpPut("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateFinancialAccount(int id, [FromBody] UpdateFinancialAccountRequest request,
+        ISender sender)
     {
-        app.MapPut("/api/financial-accounts/{id:int}", async (UpdateFinancialAccountRequest req, ISender sender) =>
-        {
-            var result = await sender.Send(req);
+        if (id != request.Id)
+            return BadRequest("Id in request body does not match id in route");
 
-            return result.IsFailed ? Result.Fail(result.Errors) : Result.Ok(result.Value);
-        });
+        var result = await sender.Send(request);
+
+        if (result.HasError<ValidationError>()) return BadRequest(result.Errors);
+
+        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
     }
 }

@@ -1,7 +1,8 @@
-using Carter;
 using FluentResults;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Shared;
 
 namespace SyleniumApi.Features.FinancialAccounts;
 
@@ -14,7 +15,7 @@ public class DeleteFinancialAccountHandler(SyleniumDbContext context)
     {
         var entity = await context.FinancialAccounts.FindAsync(request.Id);
         if (entity is null)
-            return Result.Fail("Financial account not found");
+            return new EntityNotFoundError("Financial account not found");
 
         context.FinancialAccounts.Remove(entity);
         await context.SaveChangesAsync(cancellationToken);
@@ -23,15 +24,15 @@ public class DeleteFinancialAccountHandler(SyleniumDbContext context)
     }
 }
 
-public class DeleteFinancialAccountEndpoint : ICarterModule
+public partial class FinancialAccountsController
 {
-    public void AddRoutes(IEndpointRouteBuilder app)
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteFinancialAccount(int id, ISender sender)
     {
-        app.MapDelete("/api/financial-accounts/{id:int}", async (DeleteFinancialAccountCommand req, ISender sender) =>
-        {
-            var result = await sender.Send(req);
+        var result = await sender.Send(new DeleteFinancialAccountCommand(id));
 
-            return result.IsFailed ? Results.BadRequest(result.Errors) : Results.Ok();
-        });
+        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : NoContent();
     }
 }

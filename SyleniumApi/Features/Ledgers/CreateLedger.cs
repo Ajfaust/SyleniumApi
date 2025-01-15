@@ -42,7 +42,6 @@ public class CreateLedgerHandler(SyleniumDbContext context, IValidator<CreateLed
         await context.SaveChangesAsync(cancellationToken);
 
         var response = new CreateLedgerResponse(entity.LedgerId, entity.LedgerName);
-
         return Result.Ok(response);
     }
 }

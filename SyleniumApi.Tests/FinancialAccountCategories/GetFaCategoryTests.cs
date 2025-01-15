@@ -16,25 +16,19 @@ public class GetFaCategoryTests(IntegrationTestFactory factory) : IClassFixture<
     [Fact]
     public async Task When_Exists_Should_Get_FaCategory()
     {
-        const int id = 1;
-        var existingFaCategory = _fixture.MakeFaCategory();
-
-        await _context.AddAsync(existingFaCategory);
-        await _context.SaveChangesAsync();
-
-        var response = await _client.GetAsync($"api/facategories/{id}");
+        var response = await _client.GetAsync($"api/fa-categories/{DefaultTestValues.Id}");
 
         var content = await response.Content.ReadAsStringAsync();
         var faCategory = JsonConvert.DeserializeObject<GetFaCategoryResponse>(content);
 
         faCategory.Should().NotBeNull();
-        faCategory!.Id.Should().Be(id);
+        faCategory!.Id.Should().Be(DefaultTestValues.Id);
     }
 
     [Fact]
     public async Task When_Not_Exists_Should_Return_Not_Found()
     {
-        var response = await _client.GetAsync("api/facategories/1");
+        var response = await _client.GetAsync("api/fa-categories/2");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

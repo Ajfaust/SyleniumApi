@@ -7,24 +7,18 @@ namespace SyleniumApi.Tests.FinancialAccountCategories;
 
 public class DeleteFaCategoriesTests(IntegrationTestFactory factory) : IClassFixture<IntegrationTestFactory>
 {
-    private readonly Fixture _fixture = new();
     private readonly HttpClient _client = factory.CreateClient();
     private readonly SyleniumDbContext _context = factory.DbContext;
-    
+    private readonly Fixture _fixture = new();
+
     [Fact]
     public async Task When_Exists_Should_Delete_FaCategory()
     {
-        const int id = 1;
-        var existingFaCategory = _fixture.MakeFaCategory(id);
-        await _context.AddAsync(existingFaCategory);
-        await _context.SaveChangesAsync();
-        
-        var response = await _client.DeleteAsync($"api/facategories/{id}");
-        
+        var response = await _client.DeleteAsync($"api/fa-categories/{DefaultTestValues.Id}");
+
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        
-        var faCategoryResponse = await _client.GetAsync($"api/facategories/{id}");
-        
-        faCategoryResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var faCategory = await _context.FinancialAccountCategories.FindAsync(DefaultTestValues.Id);
+        faCategory.Should().BeNull();
     }
 }

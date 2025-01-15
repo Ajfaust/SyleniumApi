@@ -9,13 +9,18 @@ public class FinancialAccountCategory
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int FinancialAccountCategoryId { get; set; }
-    
-    [Required]
-    [MaxLength(200)]
-    public required string FinancialAccountCategoryName { get; set; }
-    
-    [Required]
-    public required FinancialCategoryType FinancialCategoryType { get; set; }
+
+    [Required] [MaxLength(200)] public required string FinancialAccountCategoryName { get; set; }
+
+    [Required] public required FinancialCategoryType FinancialCategoryType { get; set; }
+
+    #region Ledger Relation
+
+    public required int LedgerId { get; set; }
+
+    public virtual Ledger? Ledger { get; set; }
+
+    #endregion
 }
 
 public enum FinancialCategoryType
