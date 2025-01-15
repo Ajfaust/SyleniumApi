@@ -62,7 +62,6 @@ public static class ServiceCollectionExtensions
         using var scope = services.BuildServiceProvider().CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<T>();
         context.Database.EnsureCreated();
-
         if (context is SyleniumDbContext syleniumDbContext)
             SeedDatabase(syleniumDbContext);
     }
@@ -90,6 +89,13 @@ public static class ServiceCollectionExtensions
             LedgerId = DefaultTestValues.Id,
             FinancialAccountCategoryId = DefaultTestValues.Id,
             FinancialAccountName = "Test Account"
+        });
+        context.SaveChanges();
+
+        context.Vendors.Add(new Vendor
+        {
+            LedgerId = DefaultTestValues.Id,
+            VendorName = "Test Vendor"
         });
         context.SaveChanges();
     }

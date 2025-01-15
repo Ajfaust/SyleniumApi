@@ -10,9 +10,12 @@ public class Ledger
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int LedgerId { get; set; }
 
-    [Required] [MaxLength(200)] public required string LedgerName { get; set; }
+    [Required]
+    [MaxLength(200)]
+    public required string LedgerName { get; set; }
 
-    [Required] public required DateTime CreatedDate { get; set; }
+    [Required]
+    public required DateTime CreatedDate { get; set; }
 
     #region Financial Account Category Relation
 
