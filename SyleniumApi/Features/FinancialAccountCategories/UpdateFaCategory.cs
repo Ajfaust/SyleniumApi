@@ -58,17 +58,37 @@ public partial class FaCategoriesController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateFaCategory(int id, [FromBody] UpdateFaCategoryCommand command,
         ISender sender)
     {
-        if (id != command.Id)
-            return BadRequest("Id mismatch");
+        try
+        {
+            if (id != command.Id)
+                return BadRequest("Id mismatch");
 
-        var result = await sender.Send(command);
+            var result = await sender.Send(command);
 
-        if (result.HasError<ValidationError>())
-            return BadRequest(result.Errors);
+            if (result.HasError<EntityNotFoundError>())
+            {
+                logger.LogNotFoundError(result);
+                return NotFound(result.Errors);
+            }
 
-        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
+            if (result.HasError<ValidationError>())
+            {
+                logger.LogValidationError(result);
+                return BadRequest(result.Errors);
+            }
+
+            logger.Information($"Successfully updated financial account category with ID: {id}");
+            return Ok(result.Value);
+        }
+        catch (Exception ex)
+        {
+            var message = $"Unexpected error updating financial account category with Id: {id}";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }

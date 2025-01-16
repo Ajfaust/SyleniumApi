@@ -28,11 +28,25 @@ public partial class FaCategoriesController
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> DeleteFaCategory(int id, ISender sender)
     {
-        var request = new DeleteFaCategoryRequest(id);
-        var result = await sender.Send(request);
+        try
+        {
+            var request = new DeleteFaCategoryRequest(id);
+            var result = await sender.Send(request);
 
-        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : NoContent();
+            if (result.HasError<EntityNotFoundError>())
+                logger.LogNotFoundError(result);
+
+            logger.Information($"Successfully deleted financial account category with Id: {id}");
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            var message = $"Unexpected error deleting financial account category with Id: {id}";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }

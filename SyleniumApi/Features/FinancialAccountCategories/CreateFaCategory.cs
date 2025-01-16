@@ -67,14 +67,29 @@ public partial class FaCategoriesController
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<CreateFaCategoryResponse>> CreateFaCategory(
         [FromBody] CreateFaCategoryCommand command,
         ISender sender)
     {
-        var result = await sender.Send(command);
+        try
+        {
+            var result = await sender.Send(command);
 
-        return result.HasError<ValidationError>()
-            ? BadRequest(result.Errors)
-            : CreatedAtAction("GetFaCategory", new { id = result.Value.Id }, result.Value);
+            if (result.HasError<ValidationError>())
+            {
+                logger.LogValidationError(result);
+                return BadRequest(result.Errors);
+            }
+
+            logger.Information($"Successfully created financial account category with Id: {result.Value.Id}");
+            return CreatedAtAction("GetFaCategory", new { id = result.Value.Id }, result.Value);
+        }
+        catch (Exception ex)
+        {
+            const string message = "Unexpected error creating new financial account category";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }
