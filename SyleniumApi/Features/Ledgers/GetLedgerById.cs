@@ -1,8 +1,8 @@
-using Carter;
 using FluentResults;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Shared;
 
 namespace SyleniumApi.Features.Ledgers;
 
@@ -16,23 +16,41 @@ public class GetLedgerHandler(SyleniumDbContext context) : IRequestHandler<GetLe
     {
         var ledger = await context.Ledgers.FindAsync(request.Id);
         if (ledger is null)
-        {
             return Result.Fail($"Ledger {request.Id} not found");
-        }
 
-        var response = new GetLedgerResponse(Id: ledger.LedgerId, Name: ledger.LedgerName);
+        var response = new GetLedgerResponse(ledger.LedgerId, ledger.LedgerName);
 
         return Result.Ok(response);
     }
 }
+
 public partial class LedgersController
 {
     [HttpGet("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetLedger(int id, ISender sender)
     {
-        var request = new GetLedgerRequest(id);
-        var result = await sender.Send(request);
+        try
+        {
+            var request = new GetLedgerRequest(id);
+            var result = await sender.Send(request);
 
-        return result.IsFailed ? NotFound(result.Errors) : Ok(result.Value);
+            if (result.HasError<EntityNotFoundError>())
+            {
+                logger.LogNotFoundError(result);
+                return NotFound(result.Errors);
+            }
+
+            logger.Information($"Got Ledger {id} successfully");
+            return Ok(result.Value);
+        }
+        catch (Exception ex)
+        {
+            var message = $"Unexpected error retrieving Ledger {id}";
+            logger.Error(message, ex);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }

@@ -1,4 +1,3 @@
-using Carter;
 using FluentResults;
 using FluentValidation;
 using MediatR;
@@ -21,30 +20,28 @@ public class UpdateLedgerValidator : AbstractValidator<UpdateLedgerCommand>
     }
 }
 
-public class UpdateLedgerHandler(SyleniumDbContext context, IValidator<UpdateLedgerCommand> validator) : IRequestHandler<UpdateLedgerCommand, Result<UpdateLedgerResponse>>
+public class UpdateLedgerHandler(SyleniumDbContext context, IValidator<UpdateLedgerCommand> validator)
+    : IRequestHandler<UpdateLedgerCommand, Result<UpdateLedgerResponse>>
 {
-    public async Task<Result<UpdateLedgerResponse>> Handle(UpdateLedgerCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UpdateLedgerResponse>> Handle(UpdateLedgerCommand request,
+        CancellationToken cancellationToken)
     {
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
         if (!validationResult.IsValid)
-        {
-            return new ValidationError("One or more properties are invalid");
-        }
-        
+            return new ValidationError(errors: validationResult.Errors);
+
         var entity = await context.Ledgers.FindAsync(request.Id);
 
         if (entity is null)
-        {
             return new EntityNotFoundError($"Ledger {request.Id} not found");
-        }
 
         entity.LedgerName = request.LedgerName;
 
         context.Entry(entity).State = EntityState.Modified;
         await context.SaveChangesAsync(cancellationToken);
 
-        var response = new UpdateLedgerResponse(Id: entity.LedgerId, LedgerName: entity.LedgerName);
+        var response = new UpdateLedgerResponse(entity.LedgerId, entity.LedgerName);
 
         return Result.Ok(response);
     }
@@ -58,17 +55,35 @@ public partial class LedgersController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateLedger(int id, UpdateLedgerCommand command, ISender sender)
     {
-        if (id != command.Id) {
-            return BadRequest("Id in the URL does not match the Id in the request body");
-        }
-        
-        var result = await sender.Send(command);
-
-        if (result.HasError<ValidationError>())
+        try
         {
-            return BadRequest(result.Errors);
-        }
+            if (id != command.Id)
+                return BadRequest("Id in the URL does not match the Id in the request body");
 
-        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
+            var result = await sender.Send(command);
+
+            if (result.HasError<ValidationError>())
+            {
+                logger.Error("Validation Failed {Reasons}",
+                    result.Reasons.Where(r => r is ValidationError).Select(r => r.Message));
+                return BadRequest(result.Errors);
+            }
+
+            if (result.HasError<EntityNotFoundError>())
+            {
+                logger.Error("Not Found Error {Errors}",
+                    result.Errors.Where(e => e is EntityNotFoundError).Select(e => e.Message));
+                return NotFound(result.Errors);
+            }
+
+            logger.Information($"Ledger {id} updated successfully");
+            return Ok(result.Value);
+        }
+        catch (Exception ex)
+        {
+            var message = $"Unexpected error updating Ledger {id}";
+            logger.Error(message, ex);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }

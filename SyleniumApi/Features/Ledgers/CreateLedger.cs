@@ -29,7 +29,7 @@ public class CreateLedgerHandler(SyleniumDbContext context, IValidator<CreateLed
         var validationResult = await validator.ValidateAsync(command, cancellationToken);
 
         if (!validationResult.IsValid)
-            return new ValidationError("One or more properties are invalid");
+            return new ValidationError(errors: validationResult.Errors);
 
         var entity = new Ledger
         {
@@ -50,15 +50,30 @@ public partial class LedgersController
 {
     // POST /api/ledgers
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<CreateLedgerResponse>> CreateLedger([FromBody] CreateLedgerCommand command,
         ISender sender)
     {
-        var result = await sender.Send(command);
+        try
+        {
+            var result = await sender.Send(command);
 
-        return result.HasError<ValidationError>()
-            ? BadRequest(result.Errors)
-            : CreatedAtAction("GetLedger", new { id = result.Value.Id }, result.Value);
+            if (result.HasError<ValidationError>())
+            {
+                logger.LogValidationError(result);
+                return BadRequest(result.Errors);
+            }
+
+            logger.Information($"Ledger {result.Value.Id} created successfully");
+            return CreatedAtAction("GetLedger", new { id = result.Value.Id }, result.Value);
+        }
+        catch (Exception ex)
+        {
+            const string message = "Unexpected error creating new Ledger";
+            logger.Error(message, ex);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }
