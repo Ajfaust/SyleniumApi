@@ -34,9 +34,25 @@ public partial class FinancialAccountsController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetFinancialAccount(int id, ISender sender)
     {
-        var query = new GetFinancialAccountQuery(id);
-        var result = await sender.Send(query);
+        try
+        {
+            var query = new GetFinancialAccountQuery(id);
+            var result = await sender.Send(query);
 
-        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
+            if (result.HasError<EntityNotFoundError>())
+            {
+                logger.LogNotFoundError(result);
+                return NotFound(result.Errors);
+            }
+
+            logger.Information($"Successfully retrieved financial account with Id: {id}");
+            return Ok(result.Value);
+        }
+        catch (Exception ex)
+        {
+            var message = $"Unexpected error retrieving financial account with Id: {id}";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }

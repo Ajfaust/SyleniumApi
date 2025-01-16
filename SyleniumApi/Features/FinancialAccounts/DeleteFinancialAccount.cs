@@ -31,8 +31,24 @@ public partial class FinancialAccountsController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteFinancialAccount(int id, ISender sender)
     {
-        var result = await sender.Send(new DeleteFinancialAccountCommand(id));
+        try
+        {
+            var result = await sender.Send(new DeleteFinancialAccountCommand(id));
 
-        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : NoContent();
+            if (result.HasError<EntityNotFoundError>())
+            {
+                logger.LogNotFoundError(result);
+                return NotFound(result.Errors);
+            }
+
+            logger.Information($"Successfully deleted financial account with Id: {id}");
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            var message = $"Unexpected error deleting financial account with Id: {id}";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }

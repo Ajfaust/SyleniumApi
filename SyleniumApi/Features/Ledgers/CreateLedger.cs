@@ -72,7 +72,7 @@ public partial class LedgersController
         catch (Exception ex)
         {
             const string message = "Unexpected error creating new Ledger";
-            logger.Error(message, ex);
+            logger.Error(ex, message);
             return StatusCode(StatusCodes.Status500InternalServerError, message);
         }
     }

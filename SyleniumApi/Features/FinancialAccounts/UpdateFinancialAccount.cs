@@ -31,8 +31,7 @@ public class UpdateFinancialAccountHandler(
     {
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return new ValidationError("Validation error: ").CausedBy(
-                validationResult.Errors.Select(e => new Error(e.ErrorMessage)));
+            return new ValidationError(errors: validationResult.Errors);
 
         var entity = await context.FinancialAccounts.FindAsync(request.Id);
         if (entity == null)
@@ -58,13 +57,33 @@ public partial class FinancialAccountsController
     public async Task<IActionResult> UpdateFinancialAccount(int id, [FromBody] UpdateFinancialAccountRequest request,
         ISender sender)
     {
-        if (id != request.Id)
-            return BadRequest("Id in request body does not match id in route");
+        try
+        {
+            if (id != request.Id)
+                return BadRequest("Id in request body does not match id in route");
 
-        var result = await sender.Send(request);
+            var result = await sender.Send(request);
 
-        if (result.HasError<ValidationError>()) return BadRequest(result.Errors);
+            if (result.HasError<EntityNotFoundError>())
+            {
+                logger.LogNotFoundError(result);
+                return NotFound(result.Errors);
+            }
 
-        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
+            if (result.HasError<ValidationError>())
+            {
+                logger.LogValidationError(result);
+                return BadRequest(result.Errors);
+            }
+
+            logger.Information($"Successfully updated financial account with Id: {id}");
+            return Ok(result.Value);
+        }
+        catch (Exception ex)
+        {
+            var message = $"Unexpected error updating financial account with Id: {id}";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }

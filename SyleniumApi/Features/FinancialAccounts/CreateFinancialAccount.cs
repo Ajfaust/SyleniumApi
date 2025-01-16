@@ -33,7 +33,7 @@ public class
     {
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
-            return new ValidationError("One or more properties are invalid");
+            return new ValidationError(errors: validationResult.Errors);
 
         var entity = new FinancialAccount
         {
@@ -61,16 +61,31 @@ public partial class FinancialAccountsController
 {
     // POST /api/financial-accounts
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<CreateFinancialAccountResponse>> CreateFinancialAccount(
         [FromBody] CreateFinancialAccountCommand command,
         ISender sender)
     {
-        var result = await sender.Send(command);
+        try
+        {
+            var result = await sender.Send(command);
 
-        return result.HasError<ValidationError>()
-            ? BadRequest(result.Errors)
-            : CreatedAtAction("GetFinancialAccount", new { id = result.Value.Id }, result.Value);
+            if (result.HasError<ValidationError>())
+            {
+                logger.LogValidationError(result);
+                return BadRequest(result.Errors);
+            }
+
+            logger.Information($"Successfully created financial account with Id: {result.Value.Id}");
+            return CreatedAtAction("GetFinancialAccount", new { id = result.Value.Id }, result.Value);
+        }
+        catch (Exception ex)
+        {
+            const string message = "Unexpected error creating new financial account";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }
