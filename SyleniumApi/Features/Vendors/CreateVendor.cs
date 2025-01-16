@@ -50,15 +50,30 @@ public class CreateVendorHandler(SyleniumDbContext context, IValidator<CreateVen
 public partial class VendorsController
 {
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<CreateVendorResponse>> CreateVendor([FromBody] CreateVendorCommand command,
         ISender sender)
     {
-        var result = await sender.Send(command);
+        try
+        {
+            var result = await sender.Send(command);
 
-        return result.HasError<ValidationError>()
-            ? BadRequest(result.Errors)
-            : CreatedAtAction(nameof(CreateVendor), result.Value);
+            if (result.HasError<ValidationError>())
+            {
+                logger.LogValidationError(result);
+                return BadRequest(result.Errors);
+            }
+
+            logger.Information($"Successfully created vendor with Id: {result.Value.Id}");
+            return CreatedAtAction(nameof(GetVendor), new { id = result.Value.Id }, result.Value);
+        }
+        catch (Exception ex)
+        {
+            const string message = "Unexpected error creating new vendor";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }

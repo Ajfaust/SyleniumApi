@@ -52,18 +52,38 @@ public partial class VendorsController
     [ProducesResponseType<UpdateVendorResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<UpdateVendorResponse>> UpdateVendor(
         int id,
         [FromBody] UpdateVendorCommand command,
         ISender sender)
     {
-        if (id != command.Id)
-            return BadRequest("Id in the URL does not match Id in the body");
-        var result = await sender.Send(command);
+        try
+        {
+            if (id != command.Id)
+                return BadRequest("Id in the URL does not match Id in the body");
+            var result = await sender.Send(command);
 
-        if (result.HasError<ValidationError>())
-            return BadRequest(result.Errors);
+            if (result.HasError<EntityNotFoundError>())
+            {
+                logger.LogNotFoundError(result);
+                return NotFound(result.Errors);
+            }
 
-        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
+            if (result.HasError<ValidationError>())
+            {
+                logger.LogValidationError(result);
+                return BadRequest(result.Errors);
+            }
+
+            logger.Information($"Successfully updated vendor with Id: {id}");
+            return Ok(result.Value);
+        }
+        catch (Exception ex)
+        {
+            var message = $"Unexpected error updating vendor with Id: {id}";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }
