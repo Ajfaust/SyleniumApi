@@ -30,8 +30,7 @@ public class UpdateTransactionCategoryHandler(
     {
         var validationResult = await validator.ValidateAsync(command);
         if (!validationResult.IsValid)
-            return new ValidationError("Validation failed").CausedBy(
-                validationResult.Errors.Select(e => e.ErrorMessage));
+            return new ValidationError(errors: validationResult.Errors);
 
         var transactionCategory = await context.TransactionCategories.FindAsync(command.Id);
         if (transactionCategory == null)
@@ -41,7 +40,7 @@ public class UpdateTransactionCategoryHandler(
         {
             var parentCategory = await context.TransactionCategories.FindAsync(command.ParentId);
             if (parentCategory == null)
-                return new ValidationError("Parent transaction category not found");
+                return new ValidationError("Parent Category not found");
         }
 
         transactionCategory.ParentCategoryId = command.ParentId;
@@ -65,14 +64,30 @@ public partial class TransactionCategoriesController
     public async Task<IActionResult> UpdateTransactionCategory(int id,
         [FromBody] UpdateTransactionCategoryCommand command, ISender sender)
     {
-        if (id != command.Id)
-            return BadRequest("Id from route does not match Id in body");
+        try
+        {
+            if (id != command.Id)
+                return BadRequest("Id from route does not match Id in body");
 
-        var result = await sender.Send(command);
+            var result = await sender.Send(command);
 
-        if (result.HasError<ValidationError>())
-            return BadRequest(result.Errors);
+            if (result.HasError<EntityNotFoundError>())
+            {
+                logger.LogNotFoundError(result);
+                return NotFound(result.Errors);
+            }
 
-        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
+            if (result.HasError<ValidationError>())
+                return BadRequest(result.Errors);
+
+            logger.Information($"Successfully updated transaction category with Id: {id}");
+            return Ok(result.Value);
+        }
+        catch (Exception ex)
+        {
+            var message = $"Unexpected error updating transaction category with Id: {id}";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }

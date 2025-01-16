@@ -85,7 +85,7 @@ public class UpdateTransactionCategoryTests(IntegrationTestFactory factory) : IC
         {
             yield return [DefaultTestValues.Id, new string('a', 300)];
             yield return [100, "New Name"];
-            yield return [null, string.Empty];
+            yield return [null!, string.Empty];
         }
 
         IEnumerator IEnumerable.GetEnumerator()

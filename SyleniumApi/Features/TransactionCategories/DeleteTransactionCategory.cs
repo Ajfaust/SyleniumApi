@@ -30,11 +30,28 @@ public partial class TransactionCategoriesController
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Delete(int id, ISender sender)
     {
-        var command = new DeleteTransactionCategoryCommand(id);
-        var result = await sender.Send(command);
+        try
+        {
+            var command = new DeleteTransactionCategoryCommand(id);
+            var result = await sender.Send(command);
 
-        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : NoContent();
+            if (result.HasError<EntityNotFoundError>())
+            {
+                logger.LogNotFoundError(result);
+                return NotFound(result.Errors);
+            }
+
+            logger.Information($"Successfully deleted transaction category with Id: {id}");
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            var message = $"Unexpected error deleting transaction category with Id: {id}";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }
