@@ -1,50 +1,49 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace SyleniumApi.Data.Entities
+namespace SyleniumApi.Data.Entities;
+
+[Table("Transaction")]
+public class Transaction
 {
-    [Table("Transaction")]
-    public class Transaction
-    {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int TransactionId { get; set; }
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int TransactionId { get; set; }
 
-        [Required]
-        public DateTime Date { get; set; }
+    [Required]
+    public DateTime Date { get; set; }
 
-        [MaxLength(500)]
-        public string? Description { get; set; }
+    [MaxLength(500)]
+    public string? Description { get; set; }
 
-        public decimal Inflow { get; set; }
+    public decimal Inflow { get; set; }
 
-        public decimal Outflow { get; set; }
+    public decimal Outflow { get; set; }
 
-        public bool Cleared { get; set; }
+    public bool Cleared { get; set; }
 
-        #region Vendor Relation
+    #region Vendor Relation
 
-        public int? VendorId { get; set; }
+    public int VendorId { get; set; }
 
-        public virtual Vendor? Vendor { get; set; }
+    public virtual Vendor? Vendor { get; set; }
 
-        #endregion Vendor Relation
+    #endregion Vendor Relation
 
-        #region Transaction Category Relation
+    #region Transaction Category Relation
 
-        public int? TransactionCategoryId { get; set; }
+    public int TransactionCategoryId { get; set; }
 
-        public virtual TransactionCategory? TransactionCategory { get; set; }
+    public virtual TransactionCategory? TransactionCategory { get; set; }
 
-        #endregion Transaction Category Relation
+    #endregion Transaction Category Relation
 
-        #region Account Relation
+    #region Financial Account Relation
 
-        [Required]
-        public int AccountId { get; set; }
+    [Required]
+    public required int FinancialAccountId { get; set; }
 
-        public virtual required FinancialAccount FinancialAccount { get; set; }
+    public virtual FinancialAccount? FinancialAccount { get; set; }
 
-        #endregion Account Relation
-    }
+    #endregion Financial Account Relation
 }
