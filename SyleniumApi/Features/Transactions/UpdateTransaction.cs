@@ -70,17 +70,37 @@ public partial class TransactionsController
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateTransaction(int id, [FromBody] UpdateTransactionCommand command,
         ISender sender)
     {
-        if (id != command.Dto.Id)
-            return BadRequest(new ValidationError("Id in route does not match id in body"));
+        try
+        {
+            if (id != command.Dto.Id)
+                return BadRequest(new ValidationError("Id in route does not match id in body"));
 
-        var result = await sender.Send(command);
+            var result = await sender.Send(command);
 
-        if (result.HasError<ValidationError>())
-            return BadRequest(result.Errors);
+            if (result.HasError<ValidationError>())
+            {
+                logger.LogValidationError(result);
+                return BadRequest(result.Errors);
+            }
 
-        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
+            if (result.HasError<EntityNotFoundError>())
+            {
+                logger.LogNotFoundError(result);
+                return NotFound(result.Errors);
+            }
+
+            logger.Information($"Successfully updated transaction with Id: {id}");
+            return Ok(result.Value);
+        }
+        catch (Exception ex)
+        {
+            var message = $"Unexpected error updating transaction with Id: {id}";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }

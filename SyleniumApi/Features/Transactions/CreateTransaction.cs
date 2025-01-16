@@ -82,15 +82,27 @@ public partial class TransactionsController
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateTransaction(CreateTransactionCommand command, ISender sender)
     {
-        var result = await sender.Send(command);
+        try
+        {
+            var result = await sender.Send(command);
 
-        if (result.IsFailed)
-            _logger.Error("Create Transaction command failed: {0}", result.Errors);
+            if (result.HasError<ValidationError>())
+            {
+                logger.LogValidationError(result);
+                return BadRequest(result.Errors);
+            }
 
-        return result.HasError<ValidationError>()
-            ? BadRequest(result.Errors)
-            : CreatedAtAction(nameof(GetTransaction), new { id = result.Value.Id }, result.Value);
+            logger.Information($"Successfully created transaction with Id: {result.Value.Id}");
+            return CreatedAtAction(nameof(GetTransaction), new { id = result.Value.Id }, result.Value);
+        }
+        catch (Exception ex)
+        {
+            const string message = "Unexpected error creating new transaction";
+            logger.Error(ex, message);
+            return StatusCode(StatusCodes.Status500InternalServerError, message);
+        }
     }
 }
