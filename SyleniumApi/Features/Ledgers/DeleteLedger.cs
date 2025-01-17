@@ -1,56 +1,33 @@
-using FluentResults;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Ledgers;
 
-public record DeleteLedgerCommand(int Id) : IRequest<Result>;
+public record DeleteLedgerCommand(int Id);
 
-public class DeleteLedgerHandler(SyleniumDbContext context) : IRequestHandler<DeleteLedgerCommand, Result>
+public class DeleteLedgerEndpoint(SyleniumDbContext context, ILogger logger) : Endpoint<DeleteLedgerCommand>
 {
-    public async Task<Result> Handle(DeleteLedgerCommand request, CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var ledger = await context.Ledgers.FindAsync(request.Id);
-        if (ledger is null)
-            return new EntityNotFoundError($"Ledger {request.Id} not found");
-
-        context.Ledgers.Remove(ledger);
-
-        await context.SaveChangesAsync(cancellationToken);
-
-        return Result.Ok();
+        Delete("/api/ledgers/{Id:int}");
+        AllowAnonymous();
     }
-}
 
-public partial class LedgersController
-{
-    [HttpDelete("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> DeleteLedger(int id, ISender sender)
+    public override async Task HandleAsync(DeleteLedgerCommand req, CancellationToken ct)
     {
-        try
+        var ledger = await context.Ledgers.FindAsync(req.Id);
+        if (ledger is null)
         {
-            var command = new DeleteLedgerCommand(id);
-            var result = await sender.Send(command);
-
-            if (result.HasError<EntityNotFoundError>())
-            {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
-            }
-
-            logger.Information($"Ledger {id} deleted successfully");
-            return NoContent();
+            logger.Error($"Ledger {req.Id} not found.");
+            await SendNotFoundAsync();
         }
-        catch (Exception ex)
+        else
         {
-            var message = $"Unexpected error deleting Ledger {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
+            context.Ledgers.Remove(ledger);
+            await context.SaveChangesAsync();
+
+            await SendNoContentAsync();
         }
     }
 }

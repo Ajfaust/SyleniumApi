@@ -1,56 +1,35 @@
-using FluentResults;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Ledgers;
 
-public record GetLedgerRequest(int Id) : IRequest<Result<GetLedgerResponse>>;
+public record GetLedgerRequest(int Id);
 
 public record GetLedgerResponse(int Id, string Name);
 
-public class GetLedgerHandler(SyleniumDbContext context) : IRequestHandler<GetLedgerRequest, Result<GetLedgerResponse>>
+public class GetLedgerEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<GetLedgerRequest, GetLedgerResponse>
 {
-    public async Task<Result<GetLedgerResponse>> Handle(GetLedgerRequest request, CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var ledger = await context.Ledgers.FindAsync(request.Id);
-        if (ledger is null)
-            return Result.Fail($"Ledger {request.Id} not found");
-
-        var response = new GetLedgerResponse(ledger.LedgerId, ledger.LedgerName);
-
-        return Result.Ok(response);
+        Get("/api/ledgers/{Id:int}");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class LedgersController
-{
-    [HttpGet("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetLedger(int id, ISender sender)
+    public override async Task HandleAsync(GetLedgerRequest req, CancellationToken ct)
     {
-        try
+        var ledger = await context.Ledgers.FindAsync(req.Id);
+        if (ledger is null)
         {
-            var request = new GetLedgerRequest(id);
-            var result = await sender.Send(request);
-
-            if (result.HasError<EntityNotFoundError>())
-            {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
-            }
-
-            logger.Information($"Got Ledger {id} successfully");
-            return Ok(result.Value);
+            logger.Error("Ledger {id} not found.", req.Id);
+            await SendNotFoundAsync();
         }
-        catch (Exception ex)
+        else
         {
-            var message = $"Unexpected error retrieving Ledger {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
+            logger.Information("Successfully retrieved ledger {id}", ledger.LedgerId);
+            await SendOkAsync(new GetLedgerResponse(ledger.LedgerId, ledger.LedgerName));
         }
     }
 }

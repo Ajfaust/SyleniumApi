@@ -1,6 +1,6 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
-using FluentValidation;
+using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using SyleniumApi.DbContexts;
@@ -34,11 +34,7 @@ builder.Services.AddMediatR(config =>
     config.RegisterServicesFromAssembly(assembly)
 );
 
-// builder.Services.AddCarter();
-
-builder.Services.AddValidatorsFromAssembly(assembly);
-
-// builder.Services.AddScoped<IJournalService, JournalService>();
+builder.Services.AddFastEndpoints();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -62,6 +58,8 @@ app.UseCors(myPolicy);
 app.UseSerilogRequestLogging();
 
 app.MapControllers();
+
+app.UseFastEndpoints();
 
 app.UseHttpsRedirection();
 
