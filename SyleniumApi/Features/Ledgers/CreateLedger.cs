@@ -64,7 +64,7 @@ public class CreateLedgerEndpoint(SyleniumDbContext context, ILogger logger)
             await context.Ledgers.AddAsync(ledger, ct);
             await context.SaveChangesAsync(ct);
 
-            await SendMappedAsync(ledger);
+            await SendMappedAsync(ledger, StatusCodes.Status201Created);
         }
     }
 }

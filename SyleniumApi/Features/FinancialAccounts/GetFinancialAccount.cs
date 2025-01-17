@@ -1,58 +1,33 @@
-using FluentResults;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.FinancialAccounts;
 
-public record GetFinancialAccountQuery(int Id) : IRequest<Result<GetFinancialAccountResponse>>;
+public record GetFinancialAccountQuery(int Id);
 
 public record GetFinancialAccountResponse(int Id, string Name);
 
-public class GetFinancialAccountHandler(SyleniumDbContext context)
-    : IRequestHandler<GetFinancialAccountQuery, Result<GetFinancialAccountResponse>>
+public class GetFinancialAccountEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<GetFinancialAccountQuery, GetFinancialAccountResponse>
 {
-    public async Task<Result<GetFinancialAccountResponse>> Handle(GetFinancialAccountQuery request,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var entity = await context.FinancialAccounts.FindAsync(request.Id);
-
-        if (entity == null)
-            return new EntityNotFoundError("Financial account not found");
-
-        var response = new GetFinancialAccountResponse(entity.FinancialAccountId, entity.FinancialAccountName);
-
-        return Result.Ok(response);
+        Get("/api/financial-accounts/{Id:int}");
+        AllowAnonymous();
     }
-}
 
-public partial class FinancialAccountsController
-{
-    [HttpGet("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetFinancialAccount(int id, ISender sender)
+    public override async Task HandleAsync(GetFinancialAccountQuery req, CancellationToken ct)
     {
-        try
+        var fa = await context.FinancialAccounts.FindAsync(req.Id, ct);
+        if (fa is null)
         {
-            var query = new GetFinancialAccountQuery(id);
-            var result = await sender.Send(query);
-
-            if (result.HasError<EntityNotFoundError>())
-            {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
-            }
-
-            logger.Information($"Successfully retrieved financial account with Id: {id}");
-            return Ok(result.Value);
+            logger.Error("Could not find financial account with id {Id}", req.Id);
+            await SendNotFoundAsync(ct);
+            return;
         }
-        catch (Exception ex)
-        {
-            var message = $"Unexpected error retrieving financial account with Id: {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
-        }
+
+        var response = new GetFinancialAccountResponse(fa.FinancialAccountId, fa.FinancialAccountName);
+        await SendAsync(response);
     }
 }

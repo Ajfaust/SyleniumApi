@@ -67,6 +67,6 @@ public class CreateFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
         await context.FinancialAccountCategories.AddAsync(category, ct);
         await context.SaveChangesAsync(ct);
 
-        await SendMappedAsync(category);
+        await SendMappedAsync(category, StatusCodes.Status201Created);
     }
 }

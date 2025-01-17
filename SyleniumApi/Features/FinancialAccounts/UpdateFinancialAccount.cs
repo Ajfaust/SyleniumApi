@@ -1,19 +1,15 @@
-using FluentResults;
+using FastEndpoints;
 using FluentValidation;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.FinancialAccounts;
 
-public record UpdateFinancialAccountRequest(int Id, string Name)
-    : IRequest<Result<UpdateFinancialAccountResponse>>;
+public record UpdateFinancialAccountCommand(int Id, int LedgerId, string Name);
 
 public record UpdateFinancialAccountResponse(int Id, string Name);
 
-public class UpdateFinancialAccountValidator : AbstractValidator<UpdateFinancialAccountRequest>
+public class UpdateFinancialAccountValidator : AbstractValidator<UpdateFinancialAccountCommand>
 {
     public UpdateFinancialAccountValidator()
     {
@@ -21,69 +17,39 @@ public class UpdateFinancialAccountValidator : AbstractValidator<UpdateFinancial
     }
 }
 
-public class UpdateFinancialAccountHandler(
-    SyleniumDbContext context,
-    IValidator<UpdateFinancialAccountRequest> validator)
-    : IRequestHandler<UpdateFinancialAccountRequest, Result<UpdateFinancialAccountResponse>>
+public class UpdateFinancialAccountEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<UpdateFinancialAccountCommand, UpdateFinancialAccountResponse>
 {
-    public async Task<Result<UpdateFinancialAccountResponse>> Handle(UpdateFinancialAccountRequest request,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var validationResult = await validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-            return new ValidationError(errors: validationResult.Errors);
-
-        var entity = await context.FinancialAccounts.FindAsync(request.Id);
-        if (entity == null)
-            return new EntityNotFoundError("Financial account not found");
-
-        entity.FinancialAccountName = request.Name;
-
-        context.Entry(entity).State = EntityState.Modified;
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = new UpdateFinancialAccountResponse(entity.FinancialAccountId, entity.FinancialAccountName);
-
-        return Result.Ok(response);
+        Put("/api/financial-accounts/{Id:int}");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class FinancialAccountsController
-{
-    [HttpPut("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateFinancialAccount(int id, [FromBody] UpdateFinancialAccountRequest request,
-        ISender sender)
+    public override async Task HandleAsync(UpdateFinancialAccountCommand cmd, CancellationToken ct)
     {
-        try
+        if (ValidationFailed)
         {
-            if (id != request.Id)
-                return BadRequest("Id in request body does not match id in route");
+            foreach (var f in ValidationFailures)
+                logger.Error("{prop} failed validation: {msg}", f.PropertyName, f.ErrorMessage);
 
-            var result = await sender.Send(request);
-
-            if (result.HasError<EntityNotFoundError>())
-            {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
-            }
-
-            if (result.HasError<ValidationError>())
-            {
-                logger.LogValidationError(result);
-                return BadRequest(result.Errors);
-            }
-
-            logger.Information($"Successfully updated financial account with Id: {id}");
-            return Ok(result.Value);
+            await SendErrorsAsync();
+            return;
         }
-        catch (Exception ex)
+
+        var fa = await context.FinancialAccounts.FindAsync(cmd.Id, ct);
+        if (fa is null)
         {
-            var message = $"Unexpected error updating financial account with Id: {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
+            logger.Error("Financial account with id {id} not found", cmd.Id);
+            await SendNotFoundAsync();
+            return;
         }
+
+        fa.FinancialAccountName = cmd.Name;
+        context.FinancialAccounts.Update(fa);
+        await context.SaveChangesAsync(ct);
+
+        await SendAsync(new UpdateFinancialAccountResponse(fa.FinancialAccountId, fa.FinancialAccountName));
     }
 }

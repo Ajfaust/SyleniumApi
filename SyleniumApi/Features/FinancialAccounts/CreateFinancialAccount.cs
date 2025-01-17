@@ -1,17 +1,34 @@
-using FluentResults;
+using FastEndpoints;
 using FluentValidation;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.FinancialAccounts;
 
-public record CreateFinancialAccountCommand(string Name, int LedgerId, int FaCategoryId)
-    : IRequest<Result<CreateFinancialAccountResponse>>;
+public record CreateFinancialAccountCommand(string Name, int LedgerId, int FaCategoryId);
 
-public record CreateFinancialAccountResponse(int Id, string Name, int LedgerId, int FaCategoryId);
+public record CreateFinancialAccountResponse(int Id, string Name, int FaCategoryId);
+
+public class CreateFinancialAccountMapper : Mapper<CreateFinancialAccountCommand, CreateFinancialAccountResponse,
+    FinancialAccount>
+{
+    public override FinancialAccount ToEntity(CreateFinancialAccountCommand cmd)
+    {
+        return new FinancialAccount
+        {
+            LedgerId = cmd.LedgerId,
+            FinancialAccountName = cmd.Name,
+            FinancialAccountCategoryId = cmd.FaCategoryId
+        };
+    }
+
+    public override CreateFinancialAccountResponse FromEntity(FinancialAccount e)
+    {
+        return new CreateFinancialAccountResponse(e.FinancialAccountId, e.FinancialAccountName,
+            e.FinancialAccountCategoryId);
+    }
+}
 
 public class CreateFinancialAccountValidator : AbstractValidator<CreateFinancialAccountCommand>
 {
@@ -23,69 +40,31 @@ public class CreateFinancialAccountValidator : AbstractValidator<CreateFinancial
     }
 }
 
-public class
-    CreateFinancialAccountHandler(SyleniumDbContext context, IValidator<CreateFinancialAccountCommand> validator)
-    : IRequestHandler<CreateFinancialAccountCommand,
-        Result<CreateFinancialAccountResponse>>
+public class CreateFinancialAccountEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<CreateFinancialAccountCommand, CreateFinancialAccountResponse, CreateFinancialAccountMapper>
 {
-    public async Task<Result<CreateFinancialAccountResponse>> Handle(CreateFinancialAccountCommand request,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var validationResult = await validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-            return new ValidationError(errors: validationResult.Errors);
-
-        var entity = new FinancialAccount
-        {
-            FinancialAccountName = request.Name,
-            LedgerId = request.LedgerId,
-            FinancialAccountCategoryId = request.FaCategoryId
-        };
-
-        context.FinancialAccounts.Add(entity);
-
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = new CreateFinancialAccountResponse(
-            entity.FinancialAccountId,
-            entity.FinancialAccountName,
-            entity.LedgerId,
-            entity.FinancialAccountCategoryId
-        );
-
-        return Result.Ok(response);
+        Post("/api/financial-accounts");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class FinancialAccountsController
-{
-    // POST /api/financial-accounts
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<CreateFinancialAccountResponse>> CreateFinancialAccount(
-        [FromBody] CreateFinancialAccountCommand command,
-        ISender sender)
+    public override async Task HandleAsync(CreateFinancialAccountCommand cmd, CancellationToken ct)
     {
-        try
+        if (ValidationFailed)
         {
-            var result = await sender.Send(command);
+            foreach (var f in ValidationFailures)
+                logger.Error("{prop} has failed validation: {msg}", f.PropertyName, f.ErrorMessage);
 
-            if (result.HasError<ValidationError>())
-            {
-                logger.LogValidationError(result);
-                return BadRequest(result.Errors);
-            }
+            await SendErrorsAsync();
+            return;
+        }
 
-            logger.Information($"Successfully created financial account with Id: {result.Value.Id}");
-            return CreatedAtAction("GetFinancialAccount", new { id = result.Value.Id }, result.Value);
-        }
-        catch (Exception ex)
-        {
-            const string message = "Unexpected error creating new financial account";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
-        }
+        var fa = Map.ToEntity(cmd);
+        await context.FinancialAccounts.AddAsync(fa, ct);
+        await context.SaveChangesAsync(ct);
+
+        await SendMappedAsync(fa, StatusCodes.Status201Created);
     }
 }
