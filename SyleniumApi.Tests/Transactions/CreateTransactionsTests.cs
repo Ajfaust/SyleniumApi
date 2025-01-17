@@ -19,12 +19,13 @@ public class CreateTransactionsTests(IntegrationTestFactory factory) : IClassFix
     public async Task When_Valid_Should_Create_Transaction()
     {
         // Arrange
-        var command = _fixture.Build<CreateTransactionCommand>()
+        var dto = _fixture.Build<TransactionDto>()
             .With(x => x.AccountId, DefaultTestValues.Id)
-            .With(x => x.TransactionCategoryId, DefaultTestValues.Id)
+            .With(x => x.CategoryId, DefaultTestValues.Id)
             .With(x => x.VendorId, DefaultTestValues.Id)
             .With(x => x.Date, DateTime.UtcNow)
             .Create();
+        var command = new CreateTransactionCommand(dto);
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/transactions", command);
@@ -33,7 +34,7 @@ public class CreateTransactionsTests(IntegrationTestFactory factory) : IClassFix
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var content = await response.Content.ReadAsStringAsync();
-        var id = JsonConvert.DeserializeObject<CreateTransactionResponse>(content)?.Id;
+        var id = JsonConvert.DeserializeObject<CreateTransactionResponse>(content)?.Dto.Id;
 
         var nt = await _context.Transactions.FindAsync(id);
         nt.Should().NotBeNull();
@@ -44,13 +45,14 @@ public class CreateTransactionsTests(IntegrationTestFactory factory) : IClassFix
     public async Task When_Invalid_Should_Return_Bad_Request(DateTime date, string description)
     {
         // Arrange
-        var command = _fixture.Build<CreateTransactionCommand>()
+        var dto = _fixture.Build<TransactionDto>()
             .With(x => x.AccountId, DefaultTestValues.Id)
-            .With(x => x.TransactionCategoryId, DefaultTestValues.Id)
+            .With(x => x.CategoryId, DefaultTestValues.Id)
             .With(x => x.VendorId, DefaultTestValues.Id)
             .With(x => x.Date, date)
             .With(x => x.Description, description)
             .Create();
+        var command = new CreateTransactionCommand(dto);
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/transactions", command);

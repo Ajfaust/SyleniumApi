@@ -2,7 +2,7 @@ namespace SyleniumApi.Features.Transactions;
 
 public class TransactionDto
 {
-    public int Id { get; set; }
+    public int? Id { get; set; }
 
     public int AccountId { get; set; }
 

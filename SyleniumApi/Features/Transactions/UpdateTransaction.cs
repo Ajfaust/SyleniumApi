@@ -1,18 +1,52 @@
-using FluentResults;
+using FastEndpoints;
 using FluentValidation;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Transactions;
 
-public record UpdateTransactionCommand(TransactionDto Dto) : IRequest<Result<UpdateTransactionResponse>>;
+public record UpdateTransactionCommand(TransactionDto Dto);
 
 public record UpdateTransactionResponse(TransactionDto Dto);
 
-public class UpdateTransactionValidator : AbstractValidator<UpdateTransactionCommand>
+public class UpdateTransactionMapper : Mapper<UpdateTransactionCommand, UpdateTransactionResponse, Transaction>
+{
+    public override Transaction ToEntity(UpdateTransactionCommand cmd)
+    {
+        var dto = cmd.Dto;
+        return new Transaction
+        {
+            FinancialAccountId = dto.AccountId,
+            TransactionCategoryId = dto.CategoryId,
+            VendorId = dto.VendorId,
+            Date = dto.Date,
+            Description = dto.Description,
+            Inflow = dto.Inflow,
+            Outflow = dto.Outflow,
+            Cleared = dto.Cleared
+        };
+    }
+
+    public override UpdateTransactionResponse FromEntity(Transaction e)
+    {
+        var dto = new TransactionDto
+        {
+            Id = e.TransactionId,
+            AccountId = e.FinancialAccountId,
+            CategoryId = e.TransactionCategoryId,
+            Date = e.Date,
+            Description = e.Description ?? string.Empty,
+            Inflow = e.Inflow,
+            Outflow = e.Outflow,
+            Cleared = e.Cleared
+        };
+
+        return new UpdateTransactionResponse(dto);
+    }
+}
+
+public class UpdateTransactionValidator : Validator<UpdateTransactionCommand>
 {
     public UpdateTransactionValidator()
     {
@@ -21,86 +55,48 @@ public class UpdateTransactionValidator : AbstractValidator<UpdateTransactionCom
     }
 }
 
-public class UpdateTransactionHandler(SyleniumDbContext context, IValidator<UpdateTransactionCommand> validator)
-    : IRequestHandler<UpdateTransactionCommand, Result<UpdateTransactionResponse>>
+public class UpdateTransactionEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<UpdateTransactionCommand, UpdateTransactionResponse, UpdateTransactionMapper>
 {
-    public async Task<Result<UpdateTransactionResponse>> Handle(
-        UpdateTransactionCommand command,
-        CancellationToken cancellationToken
-    )
+    public override void Configure()
     {
-        var dto = command.Dto;
-
-        var validationResult = await validator.ValidateAsync(command, cancellationToken);
-        if (!validationResult.IsValid)
-            return new ValidationError("Validation failed").CausedBy(
-                validationResult.Errors.Select(e => e.ErrorMessage));
-
-        var transaction = await context.Transactions.FindAsync(dto.Id);
-        if (transaction == null)
-            return new EntityNotFoundError("Transaction not found");
-
-        var accountExists = await context.FinancialAccounts.AnyAsync(a => a.FinancialAccountId == dto.AccountId);
-        if (!accountExists)
-            return new ValidationError("Invalid financial account Id");
-
-        var categoryExists =
-            await context.TransactionCategories.AnyAsync(c => c.TransactionCategoryId == dto.CategoryId);
-        if (!categoryExists)
-            return new ValidationError("Invalid category Id");
-
-        var vendorExists = await context.Vendors.AnyAsync(v => v.VendorId == dto.VendorId);
-        if (!vendorExists)
-            return new ValidationError("Invalid vendor Id");
-
-        dto.UpdateTransaction(transaction);
-
-        context.Entry(transaction).State = EntityState.Modified;
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = transaction.ToDto();
-
-        return Result.Ok(new UpdateTransactionResponse(response));
+        Put("/api/transactions/{Id:int}");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class TransactionsController
-{
-    [HttpPut("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateTransaction(int id, [FromBody] UpdateTransactionCommand command,
-        ISender sender)
+    public override async Task HandleAsync(UpdateTransactionCommand cmd, CancellationToken ct)
     {
-        try
+        if (ValidationFailed)
         {
-            if (id != command.Dto.Id)
-                return BadRequest(new ValidationError("Id in route does not match id in body"));
+            logger.Error("Validation failed for UpdateTransaction");
+            foreach (var f in ValidationFailures)
+                logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
 
-            var result = await sender.Send(command);
-
-            if (result.HasError<ValidationError>())
-            {
-                logger.LogValidationError(result);
-                return BadRequest(result.Errors);
-            }
-
-            if (result.HasError<EntityNotFoundError>())
-            {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
-            }
-
-            logger.Information($"Successfully updated transaction with Id: {id}");
-            return Ok(result.Value);
+            await SendErrorsAsync(cancellation: ct);
+            return;
         }
-        catch (Exception ex)
+
+        var transaction = await context.Transactions.FindAsync(cmd.Dto.Id, ct);
+        if (transaction is null)
         {
-            var message = $"Unexpected error updating transaction with Id: {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
+            logger.Error("Transaction with id {0} not found", cmd.Dto.Id);
+            await SendNotFoundAsync(ct);
+            return;
         }
+
+        transaction.FinancialAccountId = cmd.Dto.AccountId;
+        transaction.TransactionCategoryId = cmd.Dto.CategoryId;
+        transaction.VendorId = cmd.Dto.VendorId;
+        transaction.Date = cmd.Dto.Date;
+        transaction.Description = cmd.Dto.Description;
+        transaction.Inflow = cmd.Dto.Inflow;
+        transaction.Outflow = cmd.Dto.Outflow;
+        transaction.Cleared = cmd.Dto.Cleared;
+
+        context.Transactions.Update(transaction);
+        await context.SaveChangesAsync(ct);
+
+        await SendMappedAsync(transaction, ct: ct);
     }
 }

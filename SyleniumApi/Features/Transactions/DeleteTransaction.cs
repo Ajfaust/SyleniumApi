@@ -1,56 +1,33 @@
-using FluentResults;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Transactions;
 
-public record DeleteTransactionCommand(int Id) : IRequest<Result>;
+public record DeleteTransactionCommand(int Id);
 
-public class DeleteTransactionCommandHandler(SyleniumDbContext context)
-    : IRequestHandler<DeleteTransactionCommand, Result>
+public class DeleteTransactionEndpoint(SyleniumDbContext context, ILogger logger) : Endpoint<DeleteTransactionCommand>
 {
-    public async Task<Result> Handle(DeleteTransactionCommand command,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var transaction = await context.Transactions.FindAsync(command.Id);
-        if (transaction == null)
-            return new EntityNotFoundError("Transaction not found");
+        Delete("/api/transactions/{Id:int}");
+        AllowAnonymous();
+    }
+
+    public override async Task HandleAsync(DeleteTransactionCommand cmd, CancellationToken ct)
+    {
+        var transaction = await context.Transactions.FindAsync(cmd.Id, ct);
+
+        if (transaction is null)
+        {
+            logger.Error("Transaction with id {Id} not found", cmd.Id);
+            await SendNotFoundAsync(ct);
+            return;
+        }
 
         context.Transactions.Remove(transaction);
-        await context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(ct);
 
-        return Result.Ok();
-    }
-}
-
-public partial class TransactionsController
-{
-    [HttpDelete("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> DeleteTransaction(int id, ISender sender)
-    {
-        try
-        {
-            var result = await sender.Send(new DeleteTransactionCommand(id));
-
-            if (result.HasError<EntityNotFoundError>())
-            {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
-            }
-
-            logger.Information($"Successfully deleted transaction with Id: {id}");
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            var message = $"Unexpected error deleting transaction with Id: {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
-        }
+        await SendNoContentAsync(ct);
     }
 }

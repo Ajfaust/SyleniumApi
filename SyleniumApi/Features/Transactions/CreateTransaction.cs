@@ -1,108 +1,86 @@
-using FluentResults;
+using FastEndpoints;
 using FluentValidation;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Transactions;
 
-public record CreateTransactionCommand(
-    int AccountId,
-    int TransactionCategoryId,
-    int VendorId,
-    DateTime Date,
-    string Description,
-    decimal Inflow,
-    decimal Outflow,
-    bool Cleared
-) : IRequest<Result<CreateTransactionResponse>>;
+public record CreateTransactionCommand(TransactionDto Dto);
 
-public record CreateTransactionResponse(int Id);
+public record CreateTransactionResponse(TransactionDto Dto);
 
-public class CreateTransactionValidator : AbstractValidator<CreateTransactionCommand>
+public class CreateTransactionMapper : Mapper<CreateTransactionCommand, CreateTransactionResponse, Transaction>
+{
+    public override Transaction ToEntity(CreateTransactionCommand cmd)
+    {
+        var dto = cmd.Dto;
+        return new Transaction
+        {
+            FinancialAccountId = dto.AccountId,
+            TransactionCategoryId = dto.CategoryId,
+            VendorId = dto.VendorId,
+            Date = dto.Date,
+            Description = dto.Description,
+            Inflow = dto.Inflow,
+            Outflow = dto.Outflow,
+            Cleared = dto.Cleared
+        };
+    }
+
+    public override CreateTransactionResponse FromEntity(Transaction e)
+    {
+        var dto = new TransactionDto
+        {
+            Id = e.TransactionId,
+            AccountId = e.FinancialAccountId,
+            CategoryId = e.TransactionCategoryId,
+            Date = e.Date,
+            Description = e.Description ?? string.Empty,
+            Inflow = e.Inflow,
+            Outflow = e.Outflow,
+            Cleared = e.Cleared
+        };
+
+        return new CreateTransactionResponse(dto);
+    }
+}
+
+public class CreateTransactionValidator : Validator<CreateTransactionCommand>
 {
     public CreateTransactionValidator()
     {
-        RuleFor(x => x.Date).LessThan(DateTime.UtcNow);
-        RuleFor(x => x.Description).MaximumLength(500);
+        RuleFor(x => x.Dto.Date).LessThan(DateTime.UtcNow);
+        RuleFor(x => x.Dto.Description).MaximumLength(500);
     }
 }
 
-public class CreateTransactionHandler(SyleniumDbContext context, IValidator<CreateTransactionCommand> validator)
-    : IRequestHandler<CreateTransactionCommand, Result<CreateTransactionResponse>>
+public class CreateTransactionEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<CreateTransactionCommand, CreateTransactionResponse, CreateTransactionMapper>
 {
-    public async Task<Result<CreateTransactionResponse>> Handle(CreateTransactionCommand command,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var validationResult = await validator.ValidateAsync(command);
-        if (!validationResult.IsValid)
-            return new ValidationError("Validation failed").CausedBy(
-                validationResult.Errors.Select(e => new Error(e.ErrorMessage)));
-
-        var accountExists =
-            await context.FinancialAccounts.AnyAsync(x => x.FinancialAccountId == command.AccountId, cancellationToken);
-        if (!accountExists)
-            return new ValidationError("Account does not exist");
-
-        var transactionCategoryExists =
-            await context.TransactionCategories.AnyAsync(x => x.TransactionCategoryId == command.TransactionCategoryId,
-                cancellationToken);
-        if (!transactionCategoryExists)
-            return new ValidationError("Transaction category does not exist");
-
-        var vendorExists = await context.Vendors.AnyAsync(v => v.VendorId == command.VendorId, cancellationToken);
-        if (!vendorExists)
-            return new ValidationError("Vendor does not exist");
-
-        var transaction = new Transaction
-        {
-            FinancialAccountId = command.AccountId,
-            TransactionCategoryId = command.TransactionCategoryId,
-            VendorId = command.VendorId,
-            Date = command.Date,
-            Description = command.Description,
-            Inflow = command.Inflow,
-            Outflow = command.Outflow,
-            Cleared = command.Cleared
-        };
-        context.Transactions.Add(transaction);
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = new CreateTransactionResponse(transaction.TransactionId);
-
-        return Result.Ok(response);
+        Post("/api/transactions");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class TransactionsController
-{
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateTransaction(CreateTransactionCommand command, ISender sender)
+    public override async Task HandleAsync(CreateTransactionCommand cmd, CancellationToken ct)
     {
-        try
+        if (ValidationFailed)
         {
-            var result = await sender.Send(command);
+            logger.Error("Validation failed for CreateTransaction");
+            foreach (var f in ValidationFailures)
+                logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
 
-            if (result.HasError<ValidationError>())
-            {
-                logger.LogValidationError(result);
-                return BadRequest(result.Errors);
-            }
+            await SendErrorsAsync(cancellation: ct);
+            return;
+        }
 
-            logger.Information($"Successfully created transaction with Id: {result.Value.Id}");
-            return CreatedAtAction(nameof(GetTransaction), new { id = result.Value.Id }, result.Value);
-        }
-        catch (Exception ex)
-        {
-            const string message = "Unexpected error creating new transaction";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
-        }
+        var transaction = Map.ToEntity(cmd);
+        await context.Transactions.AddAsync(transaction, ct);
+        await context.SaveChangesAsync(ct);
+
+        await SendMappedAsync(transaction, StatusCodes.Status201Created);
     }
 }

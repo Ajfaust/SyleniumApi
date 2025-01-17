@@ -1,58 +1,53 @@
-using FluentResults;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
+using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Transactions;
 
-public record GetTransactionRequest(int Id) : IRequest<Result<GetTransactionResponse>>;
+public record GetTransactionRequest(int Id);
 
-public record GetTransactionResponse(
-    int Id,
-    int CategoryId,
-    int VendorId,
-    DateTime Date,
-    string Description,
-    decimal Inflow,
-    decimal Outflow,
-    bool Cleared);
+public record GetTransactionResponse(TransactionDto Dto);
 
-public class GetTransactionHandler(SyleniumDbContext context)
-    : IRequestHandler<GetTransactionRequest, Result<GetTransactionResponse>>
+public class GetTransactionMapper : Mapper<GetTransactionRequest, GetTransactionResponse, Transaction>
 {
-    public async Task<Result<GetTransactionResponse>> Handle(GetTransactionRequest request,
-        CancellationToken cancellationToken)
+    public override GetTransactionResponse FromEntity(Transaction e)
     {
-        var transaction = await context.Transactions.FindAsync(request.Id);
-        if (transaction is null)
-            return new EntityNotFoundError("Transaction not found");
-
-        var response = new GetTransactionResponse(
-            transaction.TransactionId,
-            transaction.TransactionCategoryId,
-            transaction.VendorId,
-            transaction.Date,
-            transaction.Description ?? string.Empty,
-            transaction.Inflow,
-            transaction.Outflow,
-            transaction.Cleared
-        );
-
-        return Result.Ok(response);
+        var dto = new TransactionDto
+        {
+            Id = e.TransactionId,
+            AccountId = e.FinancialAccountId,
+            CategoryId = e.TransactionCategoryId,
+            VendorId = e.VendorId,
+            Description = e.Description ?? string.Empty,
+            Date = e.Date,
+            Inflow = e.Inflow,
+            Outflow = e.Outflow,
+            Cleared = e.Cleared
+        };
+        return new GetTransactionResponse(dto);
     }
 }
 
-public partial class TransactionsController
+public class GetTransactionEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<GetTransactionRequest, GetTransactionResponse, GetTransactionMapper>
 {
-    [HttpGet("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<GetTransactionResponse>> GetTransaction(int id, ISender sender)
+    public override void Configure()
     {
-        var request = new GetTransactionRequest(id);
-        var result = await sender.Send(request);
+        Get("/api/transactions/{Id:int}");
+        AllowAnonymous();
+    }
 
-        return result.HasError<EntityNotFoundError>() ? NotFound(result.Errors) : Ok(result.Value);
+    public override async Task HandleAsync(GetTransactionRequest req, CancellationToken ct)
+    {
+        var transaction = await context.Transactions.FindAsync(req.Id, ct);
+        if (transaction is null)
+        {
+            logger.Error("Unable to find transaction with id {Id}", req.Id);
+            await SendNotFoundAsync(ct);
+            return;
+        }
+
+        await SendMappedAsync(transaction, ct: ct);
     }
 }
