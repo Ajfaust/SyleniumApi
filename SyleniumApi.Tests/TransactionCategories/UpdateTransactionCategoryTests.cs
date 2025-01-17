@@ -30,7 +30,7 @@ public class UpdateTransactionCategoryTests(IntegrationTestFactory factory) : IC
         await _context.SaveChangesAsync(true);
 
         var id = newCategory.TransactionCategoryId;
-        var command = new UpdateTransactionCategoryCommand(id, parentId, name);
+        var command = new UpdateTransactionCategoryCommand(id, DefaultTestValues.Id, parentId, name);
 
         // Act
         var response = await _client.PutAsJsonAsync($"/api/transaction-categories/{id}", command);
@@ -59,7 +59,9 @@ public class UpdateTransactionCategoryTests(IntegrationTestFactory factory) : IC
         };
         _context.TransactionCategories.Add(newCategory);
         await _context.SaveChangesAsync(true);
-        var command = new UpdateTransactionCategoryCommand(newCategory.TransactionCategoryId, parentId, name);
+        var command =
+            new UpdateTransactionCategoryCommand(newCategory.TransactionCategoryId, DefaultTestValues.Id, parentId,
+                name);
 
         // Act
         var response = await _client.PutAsJsonAsync($"/api/transaction-categories/{newCategory.TransactionCategoryId}",

@@ -1,57 +1,34 @@
-using FluentResults;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.TransactionCategories;
 
-public record DeleteTransactionCategoryCommand(int Id) : IRequest<Result>;
+public record DeleteTransactionCategoryCommand(int Id);
 
-public class DeleteTransactionCategoryHandler(SyleniumDbContext context)
-    : IRequestHandler<DeleteTransactionCategoryCommand, Result>
+public class DeleteTransactionCategoryEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<DeleteTransactionCategoryCommand>
 {
-    public async Task<Result> Handle(DeleteTransactionCategoryCommand request,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var transactionCategory = await context.TransactionCategories.FindAsync(request.Id);
-        if (transactionCategory is null)
-            return new EntityNotFoundError("Transaction category not found");
-
-        context.Remove(transactionCategory);
-        await context.SaveChangesAsync(cancellationToken);
-
-        return Result.Ok();
+        Delete("/api/transaction-categories/{Id:int}");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class TransactionCategoriesController
-{
-    [HttpDelete("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Delete(int id, ISender sender)
+    public override async Task HandleAsync(DeleteTransactionCategoryCommand cmd, CancellationToken ct)
     {
-        try
+        var category = await context.TransactionCategories.FindAsync(cmd.Id);
+        if (category is null)
         {
-            var command = new DeleteTransactionCategoryCommand(id);
-            var result = await sender.Send(command);
-
-            if (result.HasError<EntityNotFoundError>())
-            {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
-            }
-
-            logger.Information($"Successfully deleted transaction category with Id: {id}");
-            return NoContent();
+            logger.Error("Could not find transaction category with id {Id}", cmd.Id);
+            await SendNotFoundAsync();
+            return;
         }
-        catch (Exception ex)
-        {
-            var message = $"Unexpected error deleting transaction category with Id: {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
-        }
+
+        context.Remove(category);
+        await context.SaveChangesAsync(ct);
+
+        await SendNoContentAsync();
     }
 }

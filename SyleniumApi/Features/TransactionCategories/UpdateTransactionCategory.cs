@@ -1,16 +1,24 @@
-using FluentResults;
+using FastEndpoints;
 using FluentValidation;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.TransactionCategories;
 
-public record UpdateTransactionCategoryCommand(int Id, int? ParentId, string Name)
-    : IRequest<Result<UpdateTransactionCategoryResponse>>;
+public record UpdateTransactionCategoryCommand(int Id, int LedgerId, int? ParentId, string Name);
 
 public record UpdateTransactionCategoryResponse(int Id, int? ParentId, string Name);
+
+public class UpdateTransactionCategoryMapper : Mapper<UpdateTransactionCategoryCommand,
+    UpdateTransactionCategoryResponse, TransactionCategory>
+{
+    public override UpdateTransactionCategoryResponse FromEntity(TransactionCategory e)
+    {
+        return new UpdateTransactionCategoryResponse(e.TransactionCategoryId, e.ParentCategoryId,
+            e.TransactionCategoryName);
+    }
+}
 
 public class UpdateTransactionCategoryValidator : AbstractValidator<UpdateTransactionCategoryCommand>
 {
@@ -20,74 +28,42 @@ public class UpdateTransactionCategoryValidator : AbstractValidator<UpdateTransa
     }
 }
 
-public class UpdateTransactionCategoryHandler(
-    SyleniumDbContext context,
-    IValidator<UpdateTransactionCategoryCommand> validator)
-    : IRequestHandler<UpdateTransactionCategoryCommand, Result<UpdateTransactionCategoryResponse>>
+public class UpdateTransactionCategoryEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<UpdateTransactionCategoryCommand, UpdateTransactionCategoryResponse, UpdateTransactionCategoryMapper>
 {
-    public async Task<Result<UpdateTransactionCategoryResponse>> Handle(UpdateTransactionCategoryCommand command,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var validationResult = await validator.ValidateAsync(command);
-        if (!validationResult.IsValid)
-            return new ValidationError(errors: validationResult.Errors);
-
-        var transactionCategory = await context.TransactionCategories.FindAsync(command.Id);
-        if (transactionCategory == null)
-            return new EntityNotFoundError("Transaction category not found");
-
-        if (transactionCategory.ParentCategoryId != command.ParentId && command.ParentId != null)
-        {
-            var parentCategory = await context.TransactionCategories.FindAsync(command.ParentId);
-            if (parentCategory == null)
-                return new ValidationError("Parent Category not found");
-        }
-
-        transactionCategory.ParentCategoryId = command.ParentId;
-        transactionCategory.TransactionCategoryName = command.Name;
-
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = new UpdateTransactionCategoryResponse(transactionCategory.TransactionCategoryId,
-            transactionCategory.ParentCategoryId, transactionCategory.TransactionCategoryName);
-
-        return Result.Ok(response);
+        Put("/api/transaction-categories/{Id:int}");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class TransactionCategoriesController
-{
-    [HttpPut("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateTransactionCategory(int id,
-        [FromBody] UpdateTransactionCategoryCommand command, ISender sender)
+    public override async Task HandleAsync(UpdateTransactionCategoryCommand cmd, CancellationToken ct)
     {
-        try
+        if (ValidationFailed)
         {
-            if (id != command.Id)
-                return BadRequest("Id from route does not match Id in body");
+            logger.Error("Validation failed for UpdateTransactionCategory");
+            foreach (var f in ValidationFailures)
+                logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
 
-            var result = await sender.Send(command);
-
-            if (result.HasError<EntityNotFoundError>())
-            {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
-            }
-
-            if (result.HasError<ValidationError>())
-                return BadRequest(result.Errors);
-
-            logger.Information($"Successfully updated transaction category with Id: {id}");
-            return Ok(result.Value);
+            await SendErrorsAsync(cancellation: ct);
+            return;
         }
-        catch (Exception ex)
+
+        var category = await context.TransactionCategories.FindAsync(cmd.Id);
+        if (category is null)
         {
-            var message = $"Unexpected error updating transaction category with Id: {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
+            logger.Error("TransactionCategory with id {0} not found", cmd.Id);
+            await SendNotFoundAsync(ct);
+            return;
         }
+
+        category.ParentCategoryId = cmd.ParentId;
+        category.TransactionCategoryName = cmd.Name;
+
+        context.TransactionCategories.Update(category);
+        await context.SaveChangesAsync(ct);
+
+        await SendMappedAsync(category);
     }
 }

@@ -1,17 +1,34 @@
-using FluentResults;
+using FastEndpoints;
 using FluentValidation;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.TransactionCategories;
 
-public record CreateTransactionCategoryCommand(int LedgerId, int? ParentId, string Name)
-    : IRequest<Result<CreateTransactionCategoryResponse>>;
+public record CreateTransactionCategoryCommand(int LedgerId, int? ParentId, string Name);
 
 public record CreateTransactionCategoryResponse(int Id, int? ParentId, string Name);
+
+public class CreateTransactionCategoryMapper : Mapper<CreateTransactionCategoryCommand,
+    CreateTransactionCategoryResponse, TransactionCategory>
+{
+    public override TransactionCategory ToEntity(CreateTransactionCategoryCommand cmd)
+    {
+        return new TransactionCategory
+        {
+            LedgerId = cmd.LedgerId,
+            ParentCategoryId = cmd.ParentId,
+            TransactionCategoryName = cmd.Name
+        };
+    }
+
+    public override CreateTransactionCategoryResponse FromEntity(TransactionCategory e)
+    {
+        return new CreateTransactionCategoryResponse(e.TransactionCategoryId, e.ParentCategoryId,
+            e.TransactionCategoryName);
+    }
+}
 
 public class CreateTransactionCategoryValidator : AbstractValidator<CreateTransactionCategoryCommand>
 {
@@ -21,73 +38,32 @@ public class CreateTransactionCategoryValidator : AbstractValidator<CreateTransa
     }
 }
 
-public class CreateTransactionCategoryHandler(
-    SyleniumDbContext context,
-    IValidator<CreateTransactionCategoryCommand> validator)
-    : IRequestHandler<CreateTransactionCategoryCommand, Result<CreateTransactionCategoryResponse>>
+public class CreateTransactionCategoryEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<CreateTransactionCategoryCommand, CreateTransactionCategoryResponse, CreateTransactionCategoryMapper>
 {
-    public async Task<Result<CreateTransactionCategoryResponse>> Handle(CreateTransactionCategoryCommand request,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var validationResult = await validator.ValidateAsync(request);
-        if (!validationResult.IsValid)
-            return new ValidationError(errors: validationResult.Errors);
-
-        if (request.ParentId is not null)
-        {
-            var parent = await context.TransactionCategories.FindAsync(request.ParentId, cancellationToken);
-            if (parent is null)
-                return new ValidationError("Parent category not found.");
-        }
-
-        var transactionCategory = new TransactionCategory
-        {
-            LedgerId = request.LedgerId,
-            ParentCategoryId = request.ParentId,
-            TransactionCategoryName = request.Name
-        };
-
-        context.TransactionCategories.Add(transactionCategory);
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = new CreateTransactionCategoryResponse
-        (
-            transactionCategory.TransactionCategoryId,
-            transactionCategory.ParentCategoryId,
-            transactionCategory.TransactionCategoryName
-        );
-
-        return Result.Ok(response);
+        Post("/api/transaction-categories");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class TransactionCategoriesController
-{
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<CreateTransactionCategoryResponse>> CreateTransactionCategory(
-        [FromBody] CreateTransactionCategoryCommand request, ISender sender)
+    public override async Task HandleAsync(CreateTransactionCategoryCommand cmd, CancellationToken ct)
     {
-        try
+        if (ValidationFailed)
         {
-            var result = await sender.Send(request);
+            logger.Error("Validation failed");
+            foreach (var f in ValidationFailures)
+                logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
 
-            if (result.HasError<ValidationError>())
-            {
-                logger.LogValidationError(result);
-                return BadRequest(result.Errors);
-            }
+            await SendErrorsAsync();
+            return;
+        }
 
-            logger.Information($"Successfully created transaction category with Id: {result.Value.Id}");
-            return CreatedAtAction(nameof(GetTransactionCategory), new { id = result.Value.Id }, result.Value);
-        }
-        catch (Exception ex)
-        {
-            const string message = "Unexpected error creating new transaction category";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
-        }
+        var category = Map.ToEntity(cmd);
+        await context.TransactionCategories.AddAsync(category, ct);
+        await context.SaveChangesAsync(ct);
+
+        await SendMappedAsync(category, StatusCodes.Status201Created);
     }
 }
