@@ -1,52 +1,33 @@
-using FluentResults;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.FinancialAccountCategories;
 
-public record DeleteFaCategoryRequest(int Id) : IRequest<Result>;
+public record DeleteFaCategoryCommand(int Id);
 
-public class DeleteFaCategoryHandler(SyleniumDbContext context) : IRequestHandler<DeleteFaCategoryRequest, Result>
+public class DeleteFaCategoryEndpoint(SyleniumDbContext context, ILogger logger) : Endpoint<DeleteFaCategoryCommand>
 {
-    public async Task<Result> Handle(DeleteFaCategoryRequest request, CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var category = await context.FinancialAccountCategories.FindAsync(request.Id);
-        if (category is null)
-            return new EntityNotFoundError($"Category {request.Id} not found");
-
-        context.FinancialAccountCategories.Remove(category);
-        await context.SaveChangesAsync(cancellationToken);
-
-        return Result.Ok();
+        Delete("/api/fa-categories/{Id:int}");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class FaCategoriesController
-{
-    [HttpDelete("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> DeleteFaCategory(int id, ISender sender)
+    public override async Task HandleAsync(DeleteFaCategoryCommand cmd, CancellationToken ct)
     {
-        try
+        var faCat = await context.FinancialAccountCategories.FindAsync(cmd.Id);
+        if (faCat == null)
         {
-            var request = new DeleteFaCategoryRequest(id);
-            var result = await sender.Send(request);
-
-            if (result.HasError<EntityNotFoundError>())
-                logger.LogNotFoundError(result);
-
-            logger.Information($"Successfully deleted financial account category with Id: {id}");
-            return NoContent();
+            logger.Error("Financial account category with id {Id} not found", cmd.Id);
+            await SendNotFoundAsync();
+            return;
         }
-        catch (Exception ex)
-        {
-            var message = $"Unexpected error deleting financial account category with Id: {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
-        }
+
+        context.FinancialAccountCategories.Remove(faCat);
+        await context.SaveChangesAsync(ct);
+
+        await SendNoContentAsync();
     }
 }

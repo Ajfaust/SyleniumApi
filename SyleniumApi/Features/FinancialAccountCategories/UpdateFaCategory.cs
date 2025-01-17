@@ -1,17 +1,35 @@
-using FluentResults;
+using FastEndpoints;
 using FluentValidation;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.FinancialAccountCategories;
 
-public record UpdateFaCategoryCommand(int Id, string Name, FinancialCategoryType Type)
-    : IRequest<Result<UpdateFaCategoryResponse>>;
+public record UpdateFaCategoryCommand(int Id, int LedgerId, string Name, FinancialCategoryType Type);
 
 public record UpdateFaCategoryResponse(int Id, string Name, FinancialCategoryType Type);
+
+public class
+    UpdateFaCategoryMapper : Mapper<UpdateFaCategoryCommand, UpdateFaCategoryResponse, FinancialAccountCategory>
+{
+    public override FinancialAccountCategory ToEntity(UpdateFaCategoryCommand cmd)
+    {
+        return new FinancialAccountCategory
+        {
+            LedgerId = cmd.LedgerId,
+            FinancialAccountCategoryId = cmd.Id,
+            FinancialAccountCategoryName = cmd.Name,
+            FinancialCategoryType = cmd.Type
+        };
+    }
+
+    public override UpdateFaCategoryResponse FromEntity(FinancialAccountCategory fac)
+    {
+        return new UpdateFaCategoryResponse(fac.FinancialAccountCategoryId, fac.FinancialAccountCategoryName,
+            fac.FinancialCategoryType);
+    }
+}
 
 public class UpdateFaCategoryValidator : AbstractValidator<UpdateFaCategoryCommand>
 {
@@ -22,73 +40,44 @@ public class UpdateFaCategoryValidator : AbstractValidator<UpdateFaCategoryComma
     }
 }
 
-public class UpdateFaCategoryHandler(SyleniumDbContext context, IValidator<UpdateFaCategoryCommand> validator)
-    : IRequestHandler<UpdateFaCategoryCommand, Result<UpdateFaCategoryResponse>>
+public class UpdateFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<UpdateFaCategoryCommand, UpdateFaCategoryResponse, UpdateFaCategoryMapper>
 {
-    public async Task<Result<UpdateFaCategoryResponse>> Handle(UpdateFaCategoryCommand command,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var validationResult = await validator.ValidateAsync(command, cancellationToken);
-        if (!validationResult.IsValid)
-            return new ValidationError("One or more properties are invalid");
-
-        var category = await context.FinancialAccountCategories.FindAsync(command.Id);
-        if (category is null)
-            return new EntityNotFoundError($"Financial Account Category {command.Id} not found");
-
-        category.FinancialAccountCategoryName = command.Name;
-        category.FinancialCategoryType = command.Type;
-
-        context.FinancialAccountCategories.Update(category);
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = new UpdateFaCategoryResponse(
-            category.FinancialAccountCategoryId,
-            category.FinancialAccountCategoryName,
-            category.FinancialCategoryType
-        );
-
-        return Result.Ok(response);
+        Put("/api/fa-categories/{Id:int}");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class FaCategoriesController
-{
-    [HttpPut("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateFaCategory(int id, [FromBody] UpdateFaCategoryCommand command,
-        ISender sender)
+    public override async Task HandleAsync(UpdateFaCategoryCommand cmd, CancellationToken ct)
     {
-        try
+        if (ValidationFailed)
         {
-            if (id != command.Id)
-                return BadRequest("Id mismatch");
-
-            var result = await sender.Send(command);
-
-            if (result.HasError<EntityNotFoundError>())
+            foreach (var f in ValidationFailures)
             {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
+                logger.Error("{prop} failed validation: {msg}", f.PropertyName, f.ErrorMessage);
             }
 
-            if (result.HasError<ValidationError>())
-            {
-                logger.LogValidationError(result);
-                return BadRequest(result.Errors);
-            }
+            await SendErrorsAsync();
+            return;
+        }
 
-            logger.Information($"Successfully updated financial account category with ID: {id}");
-            return Ok(result.Value);
-        }
-        catch (Exception ex)
+        var category = await context.FinancialAccountCategories.FindAsync(cmd.Id);
+        if (category == null)
         {
-            var message = $"Unexpected error updating financial account category with Id: {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
+            logger.Error("Financial account category with id {id} not found", cmd.Id);
+            await SendNotFoundAsync();
+            return;
         }
+
+        // Only change allowed fields
+        category.FinancialAccountCategoryName = cmd.Name;
+        category.FinancialCategoryType = cmd.Type;
+        
+        context.FinancialAccountCategories.Update(category);
+        await context.SaveChangesAsync(ct);
+
+        await SendMappedAsync(category);
     }
 }

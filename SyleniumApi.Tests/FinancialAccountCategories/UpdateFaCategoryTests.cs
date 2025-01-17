@@ -20,7 +20,7 @@ public class UpdateFaCategoryTests(IntegrationTestFactory factory) : IClassFixtu
         const string newName = "New Name";
         const FinancialCategoryType newType = FinancialCategoryType.Liability;
 
-        var command = new UpdateFaCategoryCommand(DefaultTestValues.Id, newName, newType);
+        var command = new UpdateFaCategoryCommand(DefaultTestValues.Id, DefaultTestValues.Id, newName, newType);
 
         var response = await _client.PutAsJsonAsync($"api/fa-categories/{DefaultTestValues.Id}", command);
 
@@ -40,7 +40,7 @@ public class UpdateFaCategoryTests(IntegrationTestFactory factory) : IClassFixtu
     {
         var invalidName = new string('a', 201);
 
-        var command = new UpdateFaCategoryCommand(DefaultTestValues.Id, invalidName, FinancialCategoryType.Asset);
+        var command = new UpdateFaCategoryCommand(DefaultTestValues.Id, DefaultTestValues.Id, invalidName, FinancialCategoryType.Asset);
 
         var response = await _client.PutAsJsonAsync($"api/fa-categories/{DefaultTestValues.Id}", command);
 

@@ -9,7 +9,7 @@ using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Ledgers;
 
-public record UpdateLedgerCommand(int Id, string Name, DateTime Date) : IRequest<Result<UpdateLedgerResponse>>;
+public record UpdateLedgerCommand(int Id, string Name) : IRequest<Result<UpdateLedgerResponse>>;
 
 public record UpdateLedgerResponse(int Id, string Name);
 
@@ -20,8 +20,7 @@ public class UpdateLedgerMapper : Mapper<UpdateLedgerCommand, UpdateLedgerRespon
         return new Ledger
         {
             LedgerId = cmd.Id,
-            LedgerName = cmd.Name,
-            CreatedDate = cmd.Date
+            LedgerName = cmd.Name
         };
     }
 

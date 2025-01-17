@@ -14,8 +14,7 @@ public class Ledger
     [MaxLength(200)]
     public required string LedgerName { get; set; }
 
-    [Required]
-    public required DateTime CreatedDate { get; set; }
+    public DateTime CreatedDate { get; set; }
 
     #region Financial Account Category Relation
 

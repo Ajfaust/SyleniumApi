@@ -1,19 +1,39 @@
-using FluentResults;
+using FastEndpoints;
 using FluentValidation;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.FinancialAccountCategories;
 
-public record CreateFaCategoryCommand(int LedgerId, string Name, FinancialCategoryType Type)
-    : IRequest<Result<CreateFaCategoryResponse>>;
+public record CreateFaCategoryCommand(int LedgerId, string Name, FinancialCategoryType Type);
 
 public record CreateFaCategoryResponse(int Id, string Name, FinancialCategoryType Type);
 
-public class CreateFaCategoryValidator : AbstractValidator<CreateFaCategoryCommand>
+public class CreateFaCategoryMapper :
+    Mapper<CreateFaCategoryCommand, CreateFaCategoryResponse, FinancialAccountCategory>
+{
+    public override FinancialAccountCategory ToEntity(CreateFaCategoryCommand cmd)
+    {
+        return new FinancialAccountCategory
+        {
+            LedgerId = cmd.LedgerId,
+            FinancialAccountCategoryName = cmd.Name,
+            FinancialCategoryType = cmd.Type
+        };
+    }
+
+    public override CreateFaCategoryResponse FromEntity(FinancialAccountCategory entity)
+    {
+        return new CreateFaCategoryResponse(
+            entity.FinancialAccountCategoryId,
+            entity.FinancialAccountCategoryName,
+            entity.FinancialCategoryType
+        );
+    }
+}
+
+public class CreateFaCategoryValidator : Validator<CreateFaCategoryCommand>
 {
     public CreateFaCategoryValidator()
     {
@@ -22,74 +42,31 @@ public class CreateFaCategoryValidator : AbstractValidator<CreateFaCategoryComma
     }
 }
 
-public class CreateFaCategoryHandler(
-    SyleniumDbContext context,
-    IValidator<CreateFaCategoryCommand> validator,
-    ILogger<CreateFaCategoryHandler> logger)
-    : IRequestHandler<CreateFaCategoryCommand, Result<CreateFaCategoryResponse>>
+public class CreateFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<CreateFaCategoryCommand, CreateFaCategoryResponse, CreateFaCategoryMapper>
 {
-    private readonly ILogger<CreateFaCategoryHandler> _logger = logger;
-
-    public async Task<Result<CreateFaCategoryResponse>> Handle(CreateFaCategoryCommand request,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var validationResult = await validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-            return new ValidationError("Name and/or type are invalid");
-
-        var ledger = await context.Ledgers.FindAsync(request.LedgerId, cancellationToken);
-        if (ledger is null)
-            return new ValidationError("Ledger Id is invalid");
-
-        var entity = new FinancialAccountCategory
-        {
-            LedgerId = request.LedgerId,
-            FinancialAccountCategoryName = request.Name,
-            FinancialCategoryType = request.Type
-        };
-
-        context.FinancialAccountCategories.Add(entity);
-
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = new CreateFaCategoryResponse(
-            entity.FinancialAccountCategoryId,
-            entity.FinancialAccountCategoryName,
-            entity.FinancialCategoryType
-        );
-
-        return Result.Ok(response);
+        Post("/api/fa-categories");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class FaCategoriesController
-{
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<CreateFaCategoryResponse>> CreateFaCategory(
-        [FromBody] CreateFaCategoryCommand command,
-        ISender sender)
+    public override async Task HandleAsync(CreateFaCategoryCommand cmd, CancellationToken ct)
     {
-        try
+        if (ValidationFailed)
         {
-            var result = await sender.Send(command);
+            foreach (var f in ValidationFailures)
+                logger.Error("{prop} failed validation: {msg}", f.PropertyName, f.ErrorMessage);
 
-            if (result.HasError<ValidationError>())
-            {
-                logger.LogValidationError(result);
-                return BadRequest(result.Errors);
-            }
+            await SendErrorsAsync();
+            return;
+        }
 
-            logger.Information($"Successfully created financial account category with Id: {result.Value.Id}");
-            return CreatedAtAction("GetFaCategory", new { id = result.Value.Id }, result.Value);
-        }
-        catch (Exception ex)
-        {
-            const string message = "Unexpected error creating new financial account category";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
-        }
+        var category = Map.ToEntity(cmd);
+        await context.FinancialAccountCategories.AddAsync(category, ct);
+        await context.SaveChangesAsync(ct);
+
+        await SendMappedAsync(category);
     }
 }
