@@ -11,7 +11,7 @@ public record GetTransactionResponse(TransactionDto Dto);
 
 public class GetTransactionMapper : Mapper<GetTransactionRequest, GetTransactionResponse, Transaction>
 {
-    public override GetTransactionResponse FromEntity(Transaction e)
+    public override Task<GetTransactionResponse> FromEntityAsync(Transaction e, CancellationToken ct = default)
     {
         var dto = new TransactionDto
         {
@@ -25,7 +25,7 @@ public class GetTransactionMapper : Mapper<GetTransactionRequest, GetTransaction
             Outflow = e.Outflow,
             Cleared = e.Cleared
         };
-        return new GetTransactionResponse(dto);
+        return Task.FromResult(new GetTransactionResponse(dto));
     }
 }
 

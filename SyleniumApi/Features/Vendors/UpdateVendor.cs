@@ -10,11 +10,11 @@ public record UpdateVendorCommand(int Id, string Name);
 
 public record UpdateVendorResponse(int Id, string Name);
 
-public class UpdateVendorMapper : Mapper<CreateVendorCommand, CreateVendorResponse, Vendor>
+public class UpdateVendorMapper : Mapper<UpdateVendorCommand, UpdateVendorResponse, Vendor>
 {
-    public override CreateVendorResponse FromEntity(Vendor v)
+    public override Task<UpdateVendorResponse> FromEntityAsync(Vendor v, CancellationToken ct = default)
     {
-        return new CreateVendorResponse(v.VendorId, v.VendorName);
+        return Task.FromResult(new UpdateVendorResponse(v.VendorId, v.VendorName));
     }
 }
 
@@ -56,6 +56,10 @@ public class UpdateVendorEndpoint(SyleniumDbContext context, ILogger logger)
             return;
         }
 
-        await SendMappedAsync(vendor);
+        vendor.VendorName = cmd.Name;
+        context.Vendors.Update(vendor);
+        await context.SaveChangesAsync(ct);
+
+        await SendMappedAsync(vendor, ct: ct);
     }
 }

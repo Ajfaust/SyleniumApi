@@ -13,23 +13,25 @@ public record CreateFaCategoryResponse(int Id, string Name, FinancialCategoryTyp
 public class CreateFaCategoryMapper :
     Mapper<CreateFaCategoryCommand, CreateFaCategoryResponse, FinancialAccountCategory>
 {
-    public override FinancialAccountCategory ToEntity(CreateFaCategoryCommand cmd)
+    public override Task<FinancialAccountCategory> ToEntityAsync(CreateFaCategoryCommand cmd,
+        CancellationToken ct = default)
     {
-        return new FinancialAccountCategory
+        return Task.FromResult(new FinancialAccountCategory
         {
             LedgerId = cmd.LedgerId,
             FinancialAccountCategoryName = cmd.Name,
             FinancialCategoryType = cmd.Type
-        };
+        });
     }
 
-    public override CreateFaCategoryResponse FromEntity(FinancialAccountCategory entity)
+    public override Task<CreateFaCategoryResponse> FromEntityAsync(FinancialAccountCategory entity,
+        CancellationToken ct = default)
     {
-        return new CreateFaCategoryResponse(
+        return Task.FromResult(new CreateFaCategoryResponse(
             entity.FinancialAccountCategoryId,
             entity.FinancialAccountCategoryName,
             entity.FinancialCategoryType
-        );
+        ));
     }
 }
 
@@ -59,14 +61,14 @@ public class CreateFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
             foreach (var f in ValidationFailures)
                 logger.Error("{prop} failed validation: {msg}", f.PropertyName, f.ErrorMessage);
 
-            await SendErrorsAsync();
+            await SendErrorsAsync(cancellation: ct);
             return;
         }
 
-        var category = Map.ToEntity(cmd);
+        var category = await Map.ToEntityAsync(cmd, ct);
         await context.FinancialAccountCategories.AddAsync(category, ct);
         await context.SaveChangesAsync(ct);
 
-        await SendMappedAsync(category, StatusCodes.Status201Created);
+        await SendMappedAsync(category, StatusCodes.Status201Created, ct);
     }
 }

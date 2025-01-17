@@ -13,24 +13,26 @@ public record CreateTransactionCategoryResponse(int Id, int? ParentId, string Na
 public class CreateTransactionCategoryMapper : Mapper<CreateTransactionCategoryCommand,
     CreateTransactionCategoryResponse, TransactionCategory>
 {
-    public override TransactionCategory ToEntity(CreateTransactionCategoryCommand cmd)
+    public override Task<TransactionCategory> ToEntityAsync(CreateTransactionCategoryCommand cmd,
+        CancellationToken ct = default)
     {
-        return new TransactionCategory
+        return Task.FromResult(new TransactionCategory
         {
             LedgerId = cmd.LedgerId,
             ParentCategoryId = cmd.ParentId,
             TransactionCategoryName = cmd.Name
-        };
+        });
     }
 
-    public override CreateTransactionCategoryResponse FromEntity(TransactionCategory e)
+    public override Task<CreateTransactionCategoryResponse> FromEntityAsync(TransactionCategory e,
+        CancellationToken ct = default)
     {
-        return new CreateTransactionCategoryResponse(e.TransactionCategoryId, e.ParentCategoryId,
-            e.TransactionCategoryName);
+        return Task.FromResult(new CreateTransactionCategoryResponse(e.TransactionCategoryId, e.ParentCategoryId,
+            e.TransactionCategoryName));
     }
 }
 
-public class CreateTransactionCategoryValidator : AbstractValidator<CreateTransactionCategoryCommand>
+public class CreateTransactionCategoryValidator : Validator<CreateTransactionCategoryCommand>
 {
     public CreateTransactionCategoryValidator()
     {
@@ -56,14 +58,14 @@ public class CreateTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
             foreach (var f in ValidationFailures)
                 logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
 
-            await SendErrorsAsync();
+            await SendErrorsAsync(cancellation: ct);
             return;
         }
 
-        var category = Map.ToEntity(cmd);
+        var category = await Map.ToEntityAsync(cmd, ct);
         await context.TransactionCategories.AddAsync(category, ct);
         await context.SaveChangesAsync(ct);
 
-        await SendMappedAsync(category, StatusCodes.Status201Created);
+        await SendMappedAsync(category, StatusCodes.Status201Created, ct);
     }
 }

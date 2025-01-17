@@ -12,18 +12,18 @@ public record CreateLedgerResponse(int Id, string Name);
 
 public class CreateLedgerMapper : Mapper<CreateLedgerCommand, CreateLedgerResponse, Ledger>
 {
-    public override Ledger ToEntity(CreateLedgerCommand cmd)
+    public override Task<Ledger> ToEntityAsync(CreateLedgerCommand cmd, CancellationToken ct = default)
     {
-        return new Ledger
+        return Task.FromResult(new Ledger
         {
             LedgerName = cmd.Name,
             CreatedDate = DateTime.UtcNow
-        };
+        });
     }
 
-    public override CreateLedgerResponse FromEntity(Ledger l)
+    public override Task<CreateLedgerResponse> FromEntityAsync(Ledger l, CancellationToken ct)
     {
-        return new CreateLedgerResponse(l.LedgerId, l.LedgerName);
+        return Task.FromResult(new CreateLedgerResponse(l.LedgerId, l.LedgerName));
     }
 }
 
@@ -56,15 +56,15 @@ public class CreateLedgerEndpoint(SyleniumDbContext context, ILogger logger)
             foreach (var f in ValidationFailures)
                 logger.Error("{prop} failed validation: {err}", f.PropertyName, f.ErrorMessage);
 
-            await SendErrorsAsync();
+            await SendErrorsAsync(cancellation: ct);
         }
         else
         {
-            var ledger = Map.ToEntity(cmd);
+            var ledger = await Map.ToEntityAsync(cmd, ct);
             await context.Ledgers.AddAsync(ledger, ct);
             await context.SaveChangesAsync(ct);
 
-            await SendMappedAsync(ledger, StatusCodes.Status201Created);
+            await SendMappedAsync(ledger, StatusCodes.Status201Created, ct);
         }
     }
 }

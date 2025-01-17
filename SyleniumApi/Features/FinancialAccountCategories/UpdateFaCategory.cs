@@ -13,25 +13,28 @@ public record UpdateFaCategoryResponse(int Id, string Name, FinancialCategoryTyp
 public class
     UpdateFaCategoryMapper : Mapper<UpdateFaCategoryCommand, UpdateFaCategoryResponse, FinancialAccountCategory>
 {
-    public override FinancialAccountCategory ToEntity(UpdateFaCategoryCommand cmd)
+    public override Task<FinancialAccountCategory> ToEntityAsync(UpdateFaCategoryCommand cmd,
+        CancellationToken ct = default)
     {
-        return new FinancialAccountCategory
+        return Task.FromResult(new FinancialAccountCategory
         {
             LedgerId = cmd.LedgerId,
             FinancialAccountCategoryId = cmd.Id,
             FinancialAccountCategoryName = cmd.Name,
             FinancialCategoryType = cmd.Type
-        };
+        });
     }
 
-    public override UpdateFaCategoryResponse FromEntity(FinancialAccountCategory fac)
+    public override Task<UpdateFaCategoryResponse> FromEntityAsync(FinancialAccountCategory fac,
+        CancellationToken ct = default)
     {
-        return new UpdateFaCategoryResponse(fac.FinancialAccountCategoryId, fac.FinancialAccountCategoryName,
-            fac.FinancialCategoryType);
+        return Task.FromResult(new UpdateFaCategoryResponse(fac.FinancialAccountCategoryId,
+            fac.FinancialAccountCategoryName,
+            fac.FinancialCategoryType));
     }
 }
 
-public class UpdateFaCategoryValidator : AbstractValidator<UpdateFaCategoryCommand>
+public class UpdateFaCategoryValidator : Validator<UpdateFaCategoryCommand>
 {
     public UpdateFaCategoryValidator()
     {
@@ -55,29 +58,27 @@ public class UpdateFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
         if (ValidationFailed)
         {
             foreach (var f in ValidationFailures)
-            {
                 logger.Error("{prop} failed validation: {msg}", f.PropertyName, f.ErrorMessage);
-            }
 
-            await SendErrorsAsync();
+            await SendErrorsAsync(cancellation: ct);
             return;
         }
 
-        var category = await context.FinancialAccountCategories.FindAsync(cmd.Id);
+        var category = await context.FinancialAccountCategories.FindAsync(cmd.Id, ct);
         if (category == null)
         {
             logger.Error("Financial account category with id {id} not found", cmd.Id);
-            await SendNotFoundAsync();
+            await SendNotFoundAsync(ct);
             return;
         }
 
         // Only change allowed fields
         category.FinancialAccountCategoryName = cmd.Name;
         category.FinancialCategoryType = cmd.Type;
-        
+
         context.FinancialAccountCategories.Update(category);
         await context.SaveChangesAsync(ct);
 
-        await SendMappedAsync(category);
+        await SendMappedAsync(category, ct: ct);
     }
 }

@@ -98,6 +98,9 @@ public class UpdateTransactionTests(IntegrationTestFactory factory) : IClassFixt
         const int id = 100;
         var dto = _fixture.Build<TransactionDto>()
             .With(x => x.Id, id)
+            .With(x => x.AccountId, DefaultTestValues.Id)
+            .With(x => x.CategoryId, DefaultTestValues.Id)
+            .With(x => x.VendorId, DefaultTestValues.Id)
             .Create();
         
         // Act

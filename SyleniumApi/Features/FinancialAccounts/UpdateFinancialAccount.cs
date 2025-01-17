@@ -9,7 +9,7 @@ public record UpdateFinancialAccountCommand(int Id, int LedgerId, string Name);
 
 public record UpdateFinancialAccountResponse(int Id, string Name);
 
-public class UpdateFinancialAccountValidator : AbstractValidator<UpdateFinancialAccountCommand>
+public class UpdateFinancialAccountValidator : Validator<UpdateFinancialAccountCommand>
 {
     public UpdateFinancialAccountValidator()
     {
@@ -34,7 +34,7 @@ public class UpdateFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
             foreach (var f in ValidationFailures)
                 logger.Error("{prop} failed validation: {msg}", f.PropertyName, f.ErrorMessage);
 
-            await SendErrorsAsync();
+            await SendErrorsAsync(cancellation: ct);
             return;
         }
 
@@ -42,7 +42,7 @@ public class UpdateFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
         if (fa is null)
         {
             logger.Error("Financial account with id {id} not found", cmd.Id);
-            await SendNotFoundAsync();
+            await SendNotFoundAsync(ct);
             return;
         }
 
@@ -50,6 +50,7 @@ public class UpdateFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
         context.FinancialAccounts.Update(fa);
         await context.SaveChangesAsync(ct);
 
-        await SendAsync(new UpdateFinancialAccountResponse(fa.FinancialAccountId, fa.FinancialAccountName));
+        await SendAsync(new UpdateFinancialAccountResponse(fa.FinancialAccountId, fa.FinancialAccountName),
+            cancellation: ct);
     }
 }

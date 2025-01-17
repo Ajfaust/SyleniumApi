@@ -11,10 +11,11 @@ public record GetFaCategoryResponse(int Id, string Name, FinancialCategoryType T
 
 public class GetFaCategoryMapper : Mapper<GetFaCategoryRequest, GetFaCategoryResponse, FinancialAccountCategory>
 {
-    public override GetFaCategoryResponse FromEntity(FinancialAccountCategory cat)
+    public override Task<GetFaCategoryResponse> FromEntityAsync(FinancialAccountCategory cat,
+        CancellationToken ct = default)
     {
-        return new GetFaCategoryResponse(
-            cat.FinancialAccountCategoryId, cat.FinancialAccountCategoryName, cat.FinancialCategoryType);
+        return Task.FromResult(new GetFaCategoryResponse(
+            cat.FinancialAccountCategoryId, cat.FinancialAccountCategoryName, cat.FinancialCategoryType));
     }
 }
 
@@ -23,19 +24,20 @@ public class GetFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
 {
     public override void Configure()
     {
+        Get("/api/fa-categories/{Id:int}");
         AllowAnonymous();
-        DontThrowIfValidationFails();
     }
 
     public override async Task HandleAsync(GetFaCategoryRequest req, CancellationToken ct)
     {
-        var category = await context.FinancialAccountCategories.FindAsync(req.Id);
+        var category = await context.FinancialAccountCategories.FindAsync(req.Id, ct);
         if (category is null)
         {
             logger.Error("Financial account category with id {id} could not be found", req.Id);
-            await SendNotFoundAsync();
+            await SendNotFoundAsync(ct);
+            return;
         }
 
-        await SendMappedAsync(category);
+        await SendMappedAsync(category, ct: ct);
     }
 }

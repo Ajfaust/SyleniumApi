@@ -1,6 +1,5 @@
 using FastEndpoints;
 using FluentValidation;
-using Microsoft.EntityFrameworkCore;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
 using ILogger = Serilog.ILogger;
@@ -13,18 +12,9 @@ public record UpdateLedgerResponse(int Id, string Name);
 
 public class UpdateLedgerMapper : Mapper<UpdateLedgerCommand, UpdateLedgerResponse, Ledger>
 {
-    public override Ledger ToEntity(UpdateLedgerCommand cmd)
+    public override Task<UpdateLedgerResponse> FromEntityAsync(Ledger l, CancellationToken ct = default)
     {
-        return new Ledger
-        {
-            LedgerId = cmd.Id,
-            LedgerName = cmd.Name
-        };
-    }
-
-    public override UpdateLedgerResponse FromEntity(Ledger l)
-    {
-        return new UpdateLedgerResponse(l.LedgerId, l.LedgerName);
+        return Task.FromResult(new UpdateLedgerResponse(l.LedgerId, l.LedgerName));
     }
 }
 
@@ -52,22 +42,22 @@ public class UpdateLedgerEndpoint(SyleniumDbContext context, ILogger logger)
         {
             ValidationFailures.ForEach(f =>
                 logger.Error("{prop} failed validation: {msg}", f.PropertyName, f.ErrorMessage));
-            await SendErrorsAsync();
+            await SendErrorsAsync(cancellation: ct);
             return;
         }
 
-        var ledger = await context.Ledgers.FindAsync(cmd.Id);
+        var ledger = await context.Ledgers.FindAsync(cmd.Id, ct);
         if (ledger is null)
         {
             logger.Error("Ledger {id} not found", cmd.Id);
-            await SendNotFoundAsync();
+            await SendNotFoundAsync(ct);
             return;
         }
 
-        ledger = Map.ToEntity(cmd);
-        context.Entry(ledger).State = EntityState.Modified;
+        ledger.LedgerName = cmd.Name;
+        context.Ledgers.Update(ledger);
         await context.SaveChangesAsync(ct);
 
-        await SendMappedAsync(ledger);
+        await SendMappedAsync(ledger, ct: ct);
     }
 }

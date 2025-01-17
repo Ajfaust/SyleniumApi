@@ -12,18 +12,18 @@ public record CreateVendorResponse(int Id, string Name);
 
 public class CreateVendorMapper : Mapper<CreateVendorCommand, CreateVendorResponse, Vendor>
 {
-    public override Vendor ToEntity(CreateVendorCommand cmd)
+    public override Task<Vendor> ToEntityAsync(CreateVendorCommand cmd, CancellationToken ct = default)
     {
-        return new Vendor
+        return Task.FromResult(new Vendor
         {
             LedgerId = cmd.LedgerId,
             VendorName = cmd.Name
-        };
+        });
     }
 
-    public override CreateVendorResponse FromEntity(Vendor v)
+    public override Task<CreateVendorResponse> FromEntityAsync(Vendor v, CancellationToken ct = default)
     {
-        return new CreateVendorResponse(v.VendorId, v.VendorName);
+        return Task.FromResult(new CreateVendorResponse(v.VendorId, v.VendorName));
     }
 }
 
@@ -58,10 +58,10 @@ public class CreateVendorEndpoint(SyleniumDbContext context, ILogger logger)
             return;
         }
 
-        var vendor = Map.ToEntity(cmd);
+        var vendor = await Map.ToEntityAsync(cmd, ct);
         await context.Vendors.AddAsync(vendor, ct);
         await context.SaveChangesAsync(ct);
 
-        await SendMappedAsync(vendor, StatusCodes.Status201Created);
+        await SendMappedAsync(vendor, StatusCodes.Status201Created, ct);
     }
 }

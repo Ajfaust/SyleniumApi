@@ -13,24 +13,26 @@ public record CreateFinancialAccountResponse(int Id, string Name, int FaCategory
 public class CreateFinancialAccountMapper : Mapper<CreateFinancialAccountCommand, CreateFinancialAccountResponse,
     FinancialAccount>
 {
-    public override FinancialAccount ToEntity(CreateFinancialAccountCommand cmd)
+    public override Task<FinancialAccount> ToEntityAsync(CreateFinancialAccountCommand cmd,
+        CancellationToken ct = default)
     {
-        return new FinancialAccount
+        return Task.FromResult(new FinancialAccount
         {
             LedgerId = cmd.LedgerId,
             FinancialAccountName = cmd.Name,
             FinancialAccountCategoryId = cmd.FaCategoryId
-        };
+        });
     }
 
-    public override CreateFinancialAccountResponse FromEntity(FinancialAccount e)
+    public override Task<CreateFinancialAccountResponse> FromEntityAsync(FinancialAccount e,
+        CancellationToken ct = default)
     {
-        return new CreateFinancialAccountResponse(e.FinancialAccountId, e.FinancialAccountName,
-            e.FinancialAccountCategoryId);
+        return Task.FromResult(new CreateFinancialAccountResponse(e.FinancialAccountId, e.FinancialAccountName,
+            e.FinancialAccountCategoryId));
     }
 }
 
-public class CreateFinancialAccountValidator : AbstractValidator<CreateFinancialAccountCommand>
+public class CreateFinancialAccountValidator : Validator<CreateFinancialAccountCommand>
 {
     public CreateFinancialAccountValidator()
     {
@@ -57,14 +59,14 @@ public class CreateFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
             foreach (var f in ValidationFailures)
                 logger.Error("{prop} has failed validation: {msg}", f.PropertyName, f.ErrorMessage);
 
-            await SendErrorsAsync();
+            await SendErrorsAsync(cancellation: ct);
             return;
         }
 
-        var fa = Map.ToEntity(cmd);
+        var fa = await Map.ToEntityAsync(cmd, ct);
         await context.FinancialAccounts.AddAsync(fa, ct);
         await context.SaveChangesAsync(ct);
 
-        await SendMappedAsync(fa, StatusCodes.Status201Created);
+        await SendMappedAsync(fa, StatusCodes.Status201Created, ct);
     }
 }

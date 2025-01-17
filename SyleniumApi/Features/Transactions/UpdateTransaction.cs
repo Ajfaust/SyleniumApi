@@ -1,5 +1,6 @@
 using FastEndpoints;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
 using ILogger = Serilog.ILogger;
@@ -12,23 +13,7 @@ public record UpdateTransactionResponse(TransactionDto Dto);
 
 public class UpdateTransactionMapper : Mapper<UpdateTransactionCommand, UpdateTransactionResponse, Transaction>
 {
-    public override Transaction ToEntity(UpdateTransactionCommand cmd)
-    {
-        var dto = cmd.Dto;
-        return new Transaction
-        {
-            FinancialAccountId = dto.AccountId,
-            TransactionCategoryId = dto.CategoryId,
-            VendorId = dto.VendorId,
-            Date = dto.Date,
-            Description = dto.Description,
-            Inflow = dto.Inflow,
-            Outflow = dto.Outflow,
-            Cleared = dto.Cleared
-        };
-    }
-
-    public override UpdateTransactionResponse FromEntity(Transaction e)
+    public override Task<UpdateTransactionResponse> FromEntityAsync(Transaction e, CancellationToken ct = default)
     {
         var dto = new TransactionDto
         {
@@ -42,7 +27,7 @@ public class UpdateTransactionMapper : Mapper<UpdateTransactionCommand, UpdateTr
             Cleared = e.Cleared
         };
 
-        return new UpdateTransactionResponse(dto);
+        return Task.FromResult(new UpdateTransactionResponse(dto));
     }
 }
 
@@ -67,6 +52,21 @@ public class UpdateTransactionEndpoint(SyleniumDbContext context, ILogger logger
 
     public override async Task HandleAsync(UpdateTransactionCommand cmd, CancellationToken ct)
     {
+        // Add validation checks for the appropriate FKs existing
+        var accountExists =
+            await context.FinancialAccounts.AnyAsync(a => a.FinancialAccountId == cmd.Dto.AccountId, ct);
+        if (!accountExists)
+            AddError($"AccountId {cmd.Dto.AccountId} does not exist");
+
+        var categoryExists =
+            await context.TransactionCategories.AnyAsync(c => c.TransactionCategoryId == cmd.Dto.CategoryId, ct);
+        if (!categoryExists)
+            AddError($"CategoryId {cmd.Dto.CategoryId} does not exist");
+
+        var vendorExists = await context.Vendors.AnyAsync(v => v.VendorId == cmd.Dto.VendorId, ct);
+        if (!vendorExists)
+            AddError($"VendorId {cmd.Dto.VendorId} does not exist");
+
         if (ValidationFailed)
         {
             logger.Error("Validation failed for UpdateTransaction");

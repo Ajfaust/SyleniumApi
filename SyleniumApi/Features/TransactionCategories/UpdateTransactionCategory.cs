@@ -13,14 +13,15 @@ public record UpdateTransactionCategoryResponse(int Id, int? ParentId, string Na
 public class UpdateTransactionCategoryMapper : Mapper<UpdateTransactionCategoryCommand,
     UpdateTransactionCategoryResponse, TransactionCategory>
 {
-    public override UpdateTransactionCategoryResponse FromEntity(TransactionCategory e)
+    public override Task<UpdateTransactionCategoryResponse> FromEntityAsync(TransactionCategory e,
+        CancellationToken ct = default)
     {
-        return new UpdateTransactionCategoryResponse(e.TransactionCategoryId, e.ParentCategoryId,
-            e.TransactionCategoryName);
+        return Task.FromResult(new UpdateTransactionCategoryResponse(e.TransactionCategoryId, e.ParentCategoryId,
+            e.TransactionCategoryName));
     }
 }
 
-public class UpdateTransactionCategoryValidator : AbstractValidator<UpdateTransactionCategoryCommand>
+public class UpdateTransactionCategoryValidator : Validator<UpdateTransactionCategoryCommand>
 {
     public UpdateTransactionCategoryValidator()
     {
@@ -58,12 +59,25 @@ public class UpdateTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
             return;
         }
 
+        if (cmd.ParentId is not null)
+        {
+            // Ensure the parent category exists
+            var parent = await context.TransactionCategories.FindAsync(cmd.ParentId);
+            if (parent is null)
+            {
+                logger.Error("Invalid parent category id {0}", cmd.ParentId);
+                AddError($"Invalid parent id {cmd.Id}");
+                await SendErrorsAsync(cancellation: ct);
+                return;
+            }
+        }
+
         category.ParentCategoryId = cmd.ParentId;
         category.TransactionCategoryName = cmd.Name;
 
         context.TransactionCategories.Update(category);
         await context.SaveChangesAsync(ct);
 
-        await SendMappedAsync(category);
+        await SendMappedAsync(category, ct: ct);
     }
 }
