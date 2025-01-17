@@ -1,18 +1,33 @@
-using FluentResults;
+using FastEndpoints;
 using FluentValidation;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Vendors;
 
-public record CreateVendorCommand(int LedgerId, string Name) : IRequest<Result<CreateVendorResponse>>;
+public record CreateVendorCommand(int LedgerId, string Name);
 
 public record CreateVendorResponse(int Id, string Name);
 
-public class CreateVendorValidator : AbstractValidator<CreateVendorCommand>
+public class CreateVendorMapper : Mapper<CreateVendorCommand, CreateVendorResponse, Vendor>
+{
+    public override Vendor ToEntity(CreateVendorCommand cmd)
+    {
+        return new Vendor
+        {
+            LedgerId = cmd.LedgerId,
+            VendorName = cmd.Name
+        };
+    }
+
+    public override CreateVendorResponse FromEntity(Vendor v)
+    {
+        return new CreateVendorResponse(v.VendorId, v.VendorName);
+    }
+}
+
+public class CreateVendorValidator : Validator<CreateVendorCommand>
 {
     public CreateVendorValidator()
     {
@@ -21,59 +36,32 @@ public class CreateVendorValidator : AbstractValidator<CreateVendorCommand>
     }
 }
 
-public class CreateVendorHandler(SyleniumDbContext context, IValidator<CreateVendorCommand> validator)
-    : IRequestHandler<CreateVendorCommand, Result<CreateVendorResponse>>
+public class CreateVendorEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<CreateVendorCommand, CreateVendorResponse, CreateVendorMapper>
 {
-    public async Task<Result<CreateVendorResponse>> Handle(CreateVendorCommand command,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var validationResult = await validator.ValidateAsync(command, cancellationToken);
-
-        if (!validationResult.IsValid)
-            return new ValidationError("One or more properties are invalid");
-
-        var entity = new Vendor
-        {
-            LedgerId = command.LedgerId,
-            VendorName = command.Name
-        };
-
-        context.Vendors.Add(entity);
-
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = new CreateVendorResponse(entity.VendorId, entity.VendorName);
-        return Result.Ok(response);
+        Post("/api/vendors");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class VendorsController
-{
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<CreateVendorResponse>> CreateVendor([FromBody] CreateVendorCommand command,
-        ISender sender)
+    public override async Task HandleAsync(CreateVendorCommand cmd, CancellationToken ct)
     {
-        try
+        if (ValidationFailed)
         {
-            var result = await sender.Send(command);
+            logger.Error("Validation failed for CreateVendor");
+            foreach (var f in ValidationFailures)
+                logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
 
-            if (result.HasError<ValidationError>())
-            {
-                logger.LogValidationError(result);
-                return BadRequest(result.Errors);
-            }
+            await SendErrorsAsync(cancellation: ct);
+            return;
+        }
 
-            logger.Information($"Successfully created vendor with Id: {result.Value.Id}");
-            return CreatedAtAction(nameof(GetVendor), new { id = result.Value.Id }, result.Value);
-        }
-        catch (Exception ex)
-        {
-            const string message = "Unexpected error creating new vendor";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
-        }
+        var vendor = Map.ToEntity(cmd);
+        await context.Vendors.AddAsync(vendor, ct);
+        await context.SaveChangesAsync(ct);
+
+        await SendMappedAsync(vendor, StatusCodes.Status201Created);
     }
 }

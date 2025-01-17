@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Text.Json.Serialization;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -23,16 +22,8 @@ builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Confi
 
 // Add services to the container.
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options => { options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; });
 builder.Services.AddDbContext<SyleniumDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
-
-var assembly = typeof(Program).Assembly;
-
-builder.Services.AddMediatR(config =>
-    config.RegisterServicesFromAssembly(assembly)
-);
 
 builder.Services.AddFastEndpoints();
 
@@ -56,8 +47,6 @@ if (app.Environment.IsDevelopment())
 app.UseCors(myPolicy);
 
 app.UseSerilogRequestLogging();
-
-app.MapControllers();
 
 app.UseFastEndpoints();
 

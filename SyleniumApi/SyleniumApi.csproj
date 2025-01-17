@@ -29,23 +29,22 @@
         <PackageReference Include="AutoFixture" Version="4.18.1"/>
         <PackageReference Include="FastEndpoints" Version="5.33.0"/>
         <PackageReference Include="FluentResults" Version="3.16.0"/>
-        <PackageReference Include="MediatR" Version="12.4.1"/>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.12.0"/>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0"/>
         <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.12.0"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tasks" Version="9.0.0">
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.1"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.1"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tasks" Version="9.0.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.1">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0"/>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" Version="1.1.0"/>
         <PackageReference Include="oqo0.SwaggerThemes" Version="1.4.3"/>
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0"/>

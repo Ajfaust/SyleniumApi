@@ -1,18 +1,24 @@
-using FluentResults;
+using FastEndpoints;
 using FluentValidation;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Vendors;
 
-public record UpdateVendorCommand(int Id, string Name) : IRequest<Result<UpdateVendorResponse>>;
+public record UpdateVendorCommand(int Id, string Name);
 
 public record UpdateVendorResponse(int Id, string Name);
 
-public class UpdateVendorValidator : AbstractValidator<UpdateVendorCommand>
+public class UpdateVendorMapper : Mapper<CreateVendorCommand, CreateVendorResponse, Vendor>
+{
+    public override CreateVendorResponse FromEntity(Vendor v)
+    {
+        return new CreateVendorResponse(v.VendorId, v.VendorName);
+    }
+}
+
+public class UpdateVendorValidator : Validator<UpdateVendorCommand>
 {
     public UpdateVendorValidator()
     {
@@ -20,70 +26,36 @@ public class UpdateVendorValidator : AbstractValidator<UpdateVendorCommand>
     }
 }
 
-public class UpdateVendorHandler(SyleniumDbContext context, IValidator<UpdateVendorCommand> validator)
-    : IRequestHandler<UpdateVendorCommand, Result<UpdateVendorResponse>>
+public class UpdateVendorEndpoint(SyleniumDbContext context, ILogger logger)
+    : Endpoint<UpdateVendorCommand, UpdateVendorResponse, UpdateVendorMapper>
 {
-    public async Task<Result<UpdateVendorResponse>> Handle(
-        UpdateVendorCommand command,
-        CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var validationResult = await validator.ValidateAsync(command);
-        if (!validationResult.IsValid)
-            return new ValidationError("One or more properties in the command is invalid")
-                .CausedBy(validationResult.Errors.Select(e => new Error(e.ErrorMessage)));
-
-        var vendor = await context.Vendors.FindAsync(command.Id);
-        if (vendor == null)
-            return new EntityNotFoundError("Vendor not found");
-
-        vendor.VendorName = command.Name;
-        context.Entry(vendor).State = EntityState.Modified;
-        await context.SaveChangesAsync(cancellationToken);
-
-        var response = new UpdateVendorResponse(vendor.VendorId, vendor.VendorName);
-
-        return Result.Ok(response);
+        Put("/api/vendors/{Id:int}");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class VendorsController
-{
-    [HttpPut("{id:int}")]
-    [ProducesResponseType<UpdateVendorResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<UpdateVendorResponse>> UpdateVendor(
-        int id,
-        [FromBody] UpdateVendorCommand command,
-        ISender sender)
+    public override async Task HandleAsync(UpdateVendorCommand cmd, CancellationToken ct)
     {
-        try
+        if (ValidationFailed)
         {
-            if (id != command.Id)
-                return BadRequest("Id in the URL does not match Id in the body");
-            var result = await sender.Send(command);
+            logger.Error("Validation failed for CreateVendor");
+            foreach (var f in ValidationFailures)
+                logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
 
-            if (result.HasError<EntityNotFoundError>())
-            {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
-            }
-
-            if (result.HasError<ValidationError>())
-            {
-                logger.LogValidationError(result);
-                return BadRequest(result.Errors);
-            }
-
-            logger.Information($"Successfully updated vendor with Id: {id}");
-            return Ok(result.Value);
+            await SendErrorsAsync(cancellation: ct);
+            return;
         }
-        catch (Exception ex)
+
+        var vendor = await context.Vendors.FindAsync(cmd.Id, ct);
+        if (vendor is null)
         {
-            var message = $"Unexpected error updating vendor with Id: {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
+            logger.Error("Vendor with id {Id} not found", cmd.Id);
+            await SendNotFoundAsync(ct);
+            return;
         }
+
+        await SendMappedAsync(vendor);
     }
 }

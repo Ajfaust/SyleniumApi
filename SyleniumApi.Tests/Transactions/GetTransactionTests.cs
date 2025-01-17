@@ -25,14 +25,14 @@ public class GetTransactionTests(IntegrationTestFactory factory) : IClassFixture
             .Create();
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync(true);
-        
+
         // Act
         var response = await _client.GetAsync($"/api/transactions/{transaction.TransactionId}");
-        
+
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        var id = JsonConvert.DeserializeObject<GetTransactionResponse>(content)?.Id;
+        var id = JsonConvert.DeserializeObject<GetTransactionResponse>(content)?.Dto.Id;
         id.Should().NotBeNull();
         id!.Should().Be(transaction.TransactionId);
     }
@@ -42,10 +42,10 @@ public class GetTransactionTests(IntegrationTestFactory factory) : IClassFixture
     {
         // Arrange
         const int id = 100;
-        
+
         // Act
         var response = await _client.GetAsync($"/api/Transactions/{id}");
-        
+
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

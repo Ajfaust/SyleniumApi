@@ -1,55 +1,33 @@
-using FluentResults;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Vendors;
 
-public record DeleteVendorCommand(int Id) : IRequest<Result>;
+public record DeleteVendorCommand(int Id);
 
-public class DeleteVendorHandler(SyleniumDbContext context) : IRequestHandler<DeleteVendorCommand, Result>
+public class DeleteVendorEndpoint(SyleniumDbContext context, ILogger logger) : Endpoint<DeleteVendorCommand>
 {
-    public async Task<Result> Handle(DeleteVendorCommand request, CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var vendor = await context.Vendors.FindAsync(request.Id);
-        if (vendor == null)
-            return new EntityNotFoundError("Vendor could not be found");
-
-        context.Remove(vendor);
-        await context.SaveChangesAsync(cancellationToken);
-
-        return Result.Ok();
+        Delete("/api/vendors/{Id:int}");
+        AllowAnonymous();
+        DontThrowIfValidationFails();
     }
-}
 
-public partial class VendorsController
-{
-    [HttpDelete("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Delete(int id, ISender sender)
+    public override async Task HandleAsync(DeleteVendorCommand cmd, CancellationToken ct)
     {
-        try
+        var vendor = await context.Vendors.FindAsync(cmd.Id, ct);
+        if (vendor is null)
         {
-            var command = new DeleteVendorCommand(id);
-            var result = await sender.Send(command);
-
-            if (result.HasError<EntityNotFoundError>())
-            {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
-            }
-
-            logger.Information($"Successfully deleted vendor with Id: {id}");
-            return NoContent();
+            logger.Error("Vendor with id {Id} not found", cmd.Id);
+            await SendNotFoundAsync(ct);
+            return;
         }
-        catch (Exception ex)
-        {
-            var message = $"Unexpected error deleting vendor with Id: {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
-        }
+
+        context.Vendors.Remove(vendor);
+        await context.SaveChangesAsync(ct);
+
+        await SendNoContentAsync(ct);
     }
 }

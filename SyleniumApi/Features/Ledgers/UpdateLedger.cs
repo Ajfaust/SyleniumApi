@@ -1,7 +1,5 @@
 using FastEndpoints;
-using FluentResults;
 using FluentValidation;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
@@ -9,7 +7,7 @@ using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Ledgers;
 
-public record UpdateLedgerCommand(int Id, string Name) : IRequest<Result<UpdateLedgerResponse>>;
+public record UpdateLedgerCommand(int Id, string Name);
 
 public record UpdateLedgerResponse(int Id, string Name);
 

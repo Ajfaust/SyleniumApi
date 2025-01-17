@@ -1,55 +1,32 @@
-using FluentResults;
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Shared;
+using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Vendors;
 
-public record GetVendorQuery(int Id) : IRequest<Result<GetVendorResponse>>;
+public record GetVendorQuery(int Id);
 
 public record GetVendorResponse(int Id, string Name);
 
-public class GetVendorHandler(SyleniumDbContext context) : IRequestHandler<GetVendorQuery, Result<GetVendorResponse>>
+public class GetVendorEndpoint(SyleniumDbContext context, ILogger logger) : Endpoint<GetVendorQuery, GetVendorResponse>
 {
-    public async Task<Result<GetVendorResponse>> Handle(GetVendorQuery query, CancellationToken cancellationToken)
+    public override void Configure()
     {
-        var entity = await context.Vendors.FindAsync(query.Id);
-
-        if (entity is null)
-            return new EntityNotFoundError("Vendor not found");
-
-        var response = new GetVendorResponse(entity.VendorId, entity.VendorName);
-        return Result.Ok(response);
+        Get("/api/vendors/{Id:int}");
+        AllowAnonymous();
     }
-}
 
-public partial class VendorsController
-{
-    [HttpGet("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<GetVendorResponse>> GetVendor(int id, ISender sender)
+    public override async Task HandleAsync(GetVendorQuery qry, CancellationToken ct)
     {
-        try
+        var vendor = await context.Vendors.FindAsync(qry.Id, ct);
+        if (vendor is null)
         {
-            var result = await sender.Send(new GetVendorQuery(id));
-
-            if (result.HasError<EntityNotFoundError>())
-            {
-                logger.LogNotFoundError(result);
-                return NotFound(result.Errors);
-            }
-
-            logger.Information($"Successfully retrieved vendor with Id: {id}");
-            return Ok(result.Value);
+            logger.Error("Vendor with id {Id} not found", qry.Id);
+            await SendNotFoundAsync(ct);
+            return;
         }
-        catch (Exception ex)
-        {
-            var message = $"Unexpected error retrieving vendor with Id: {id}";
-            logger.Error(ex, message);
-            return StatusCode(StatusCodes.Status500InternalServerError, message);
-        }
+
+        var response = new GetVendorResponse(vendor.VendorId, vendor.VendorName);
+        await SendAsync(response, cancellation: ct);
     }
 }
