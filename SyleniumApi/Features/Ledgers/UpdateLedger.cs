@@ -2,6 +2,7 @@ using FastEndpoints;
 using FluentValidation;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Features.Shared;
 using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Ledgers;
@@ -33,7 +34,11 @@ public class UpdateLedgerEndpoint(SyleniumDbContext context, ILogger logger)
     {
         Put("/api/ledgers/{Id:int}");
         AllowAnonymous();
-        DontThrowIfValidationFails();
+    }
+
+    public override void OnValidationFailed()
+    {
+        logger.LogValidationErrors(nameof(UpdateLedgerEndpoint), ValidationFailures);
     }
 
     public override async Task HandleAsync(UpdateLedgerCommand cmd, CancellationToken ct)

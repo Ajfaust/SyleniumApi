@@ -29,6 +29,6 @@ public class GetTransactionCategoryEndpoint(SyleniumDbContext context, ILogger l
 
         var response = new GetTransactionCategoryResponse(category.TransactionCategoryId, category.ParentCategoryId,
             category.TransactionCategoryName);
-        await SendOkAsync(response);
+        await SendOkAsync(response, ct);
     }
 }

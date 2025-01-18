@@ -2,6 +2,7 @@ using FastEndpoints;
 using FluentValidation;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Features.Shared;
 using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.FinancialAccountCategories;
@@ -51,20 +52,15 @@ public class CreateFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
     {
         Post("/api/fa-categories");
         AllowAnonymous();
-        DontThrowIfValidationFails();
+    }
+
+    public override void OnValidationFailed()
+    {
+        logger.LogValidationErrors(nameof(CreateFaCategoryEndpoint), ValidationFailures);
     }
 
     public override async Task HandleAsync(CreateFaCategoryCommand cmd, CancellationToken ct)
     {
-        if (ValidationFailed)
-        {
-            foreach (var f in ValidationFailures)
-                logger.Error("{prop} failed validation: {msg}", f.PropertyName, f.ErrorMessage);
-
-            await SendErrorsAsync(cancellation: ct);
-            return;
-        }
-
         var category = await Map.ToEntityAsync(cmd, ct);
         await context.FinancialAccountCategories.AddAsync(category, ct);
         await context.SaveChangesAsync(ct);

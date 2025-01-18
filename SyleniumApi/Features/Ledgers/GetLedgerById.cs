@@ -15,7 +15,6 @@ public class GetLedgerEndpoint(SyleniumDbContext context, ILogger logger)
     {
         Get("/api/ledgers/{Id:int}");
         AllowAnonymous();
-        DontThrowIfValidationFails();
     }
 
     public override async Task HandleAsync(GetLedgerRequest req, CancellationToken ct)

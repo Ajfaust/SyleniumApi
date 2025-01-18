@@ -2,6 +2,7 @@ using FastEndpoints;
 using FluentValidation;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Features.Shared;
 using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Vendors;
@@ -33,21 +34,15 @@ public class UpdateVendorEndpoint(SyleniumDbContext context, ILogger logger)
     {
         Put("/api/vendors/{Id:int}");
         AllowAnonymous();
-        DontThrowIfValidationFails();
+    }
+
+    public override void OnValidationFailed()
+    {
+        logger.LogValidationErrors(nameof(UpdateVendorEndpoint), ValidationFailures);
     }
 
     public override async Task HandleAsync(UpdateVendorCommand cmd, CancellationToken ct)
     {
-        if (ValidationFailed)
-        {
-            logger.Error("Validation failed for CreateVendor");
-            foreach (var f in ValidationFailures)
-                logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
-
-            await SendErrorsAsync(cancellation: ct);
-            return;
-        }
-
         var vendor = await context.Vendors.FindAsync(cmd.Id, ct);
         if (vendor is null)
         {

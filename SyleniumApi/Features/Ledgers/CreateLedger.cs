@@ -2,6 +2,7 @@ using FastEndpoints;
 using FluentValidation;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Features.Shared;
 using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Ledgers;
@@ -45,26 +46,20 @@ public class CreateLedgerEndpoint(SyleniumDbContext context, ILogger logger)
     public override void Configure()
     {
         Post("/api/ledgers");
-        AllowAnonymous(); // Think about changing later
-        DontThrowIfValidationFails();
+        AllowAnonymous();
+    }
+
+    public override void OnValidationFailed()
+    {
+        logger.LogValidationErrors(nameof(CreateLedgerEndpoint), ValidationFailures);
     }
 
     public override async Task HandleAsync(CreateLedgerCommand cmd, CancellationToken ct)
     {
-        if (ValidationFailed)
-        {
-            foreach (var f in ValidationFailures)
-                logger.Error("{prop} failed validation: {err}", f.PropertyName, f.ErrorMessage);
+        var ledger = await Map.ToEntityAsync(cmd, ct);
+        await context.Ledgers.AddAsync(ledger, ct);
+        await context.SaveChangesAsync(ct);
 
-            await SendErrorsAsync(cancellation: ct);
-        }
-        else
-        {
-            var ledger = await Map.ToEntityAsync(cmd, ct);
-            await context.Ledgers.AddAsync(ledger, ct);
-            await context.SaveChangesAsync(ct);
-
-            await SendMappedAsync(ledger, StatusCodes.Status201Created, ct);
-        }
+        await SendMappedAsync(ledger, StatusCodes.Status201Created, ct);
     }
 }

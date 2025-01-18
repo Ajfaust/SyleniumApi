@@ -2,6 +2,7 @@ using FastEndpoints;
 using FluentValidation;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Features.Shared;
 using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.TransactionCategories;
@@ -47,21 +48,15 @@ public class CreateTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
     {
         Post("/api/transaction-categories");
         AllowAnonymous();
-        DontThrowIfValidationFails();
+    }
+
+    public override void OnValidationFailed()
+    {
+        logger.LogValidationErrors(nameof(CreateTransactionCategoryEndpoint), ValidationFailures);
     }
 
     public override async Task HandleAsync(CreateTransactionCategoryCommand cmd, CancellationToken ct)
     {
-        if (ValidationFailed)
-        {
-            logger.Error("Validation failed");
-            foreach (var f in ValidationFailures)
-                logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
-
-            await SendErrorsAsync(cancellation: ct);
-            return;
-        }
-
         var category = await Map.ToEntityAsync(cmd, ct);
         await context.TransactionCategories.AddAsync(category, ct);
         await context.SaveChangesAsync(ct);

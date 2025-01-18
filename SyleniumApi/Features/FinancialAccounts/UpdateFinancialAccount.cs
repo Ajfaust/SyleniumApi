@@ -1,6 +1,7 @@
 using FastEndpoints;
 using FluentValidation;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Features.Shared;
 using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.FinancialAccounts;
@@ -24,20 +25,15 @@ public class UpdateFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
     {
         Put("/api/financial-accounts/{Id:int}");
         AllowAnonymous();
-        DontThrowIfValidationFails();
+    }
+
+    public override void OnValidationFailed()
+    {
+        logger.LogValidationErrors(nameof(UpdateFinancialAccountEndpoint), ValidationFailures);
     }
 
     public override async Task HandleAsync(UpdateFinancialAccountCommand cmd, CancellationToken ct)
     {
-        if (ValidationFailed)
-        {
-            foreach (var f in ValidationFailures)
-                logger.Error("{prop} failed validation: {msg}", f.PropertyName, f.ErrorMessage);
-
-            await SendErrorsAsync(cancellation: ct);
-            return;
-        }
-
         var fa = await context.FinancialAccounts.FindAsync(cmd.Id, ct);
         if (fa is null)
         {

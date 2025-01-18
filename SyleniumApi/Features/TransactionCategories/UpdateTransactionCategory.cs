@@ -2,6 +2,7 @@ using FastEndpoints;
 using FluentValidation;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Features.Shared;
 using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.TransactionCategories;
@@ -37,6 +38,11 @@ public class UpdateTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
         Put("/api/transaction-categories/{Id:int}");
         AllowAnonymous();
         DontThrowIfValidationFails();
+    }
+
+    public override void OnValidationFailed()
+    {
+        logger.LogValidationErrors(nameof(UpdateTransactionCategoryEndpoint), ValidationFailures);
     }
 
     public override async Task HandleAsync(UpdateTransactionCategoryCommand cmd, CancellationToken ct)

@@ -2,6 +2,7 @@ using FastEndpoints;
 using FluentValidation;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Features.Shared;
 using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Transactions;
@@ -62,21 +63,33 @@ public class CreateTransactionEndpoint(SyleniumDbContext context, ILogger logger
     {
         Post("/api/transactions");
         AllowAnonymous();
-        DontThrowIfValidationFails();
+    }
+
+    public override void OnBeforeValidate(CreateTransactionCommand cmd)
+    {
+        // Add validation checks for the appropriate FKs existing
+        var accountExists =
+            context.FinancialAccounts.Any(a => a.FinancialAccountId == cmd.Dto.AccountId);
+        if (!accountExists)
+            AddError($"AccountId {cmd.Dto.AccountId} does not exist");
+
+        var categoryExists =
+            context.TransactionCategories.Any(c => c.TransactionCategoryId == cmd.Dto.CategoryId);
+        if (!categoryExists)
+            AddError($"CategoryId {cmd.Dto.CategoryId} does not exist");
+
+        var vendorExists = context.Vendors.Any(v => v.VendorId == cmd.Dto.VendorId);
+        if (!vendorExists)
+            AddError($"VendorId {cmd.Dto.VendorId} does not exist");
+    }
+
+    public override void OnValidationFailed()
+    {
+        logger.LogValidationErrors(nameof(CreateTransactionEndpoint), ValidationFailures);
     }
 
     public override async Task HandleAsync(CreateTransactionCommand cmd, CancellationToken ct)
     {
-        if (ValidationFailed)
-        {
-            logger.Error("Validation failed for CreateTransaction");
-            foreach (var f in ValidationFailures)
-                logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
-
-            await SendErrorsAsync(cancellation: ct);
-            return;
-        }
-
         var transaction = await Map.ToEntityAsync(cmd, ct);
         await context.Transactions.AddAsync(transaction, ct);
         await context.SaveChangesAsync(ct);

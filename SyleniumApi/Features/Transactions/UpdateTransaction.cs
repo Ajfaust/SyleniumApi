@@ -1,8 +1,8 @@
 using FastEndpoints;
 using FluentValidation;
-using Microsoft.EntityFrameworkCore;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Features.Shared;
 using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Transactions;
@@ -47,36 +47,33 @@ public class UpdateTransactionEndpoint(SyleniumDbContext context, ILogger logger
     {
         Put("/api/transactions/{Id:int}");
         AllowAnonymous();
-        DontThrowIfValidationFails();
     }
 
-    public override async Task HandleAsync(UpdateTransactionCommand cmd, CancellationToken ct)
+    public override void OnBeforeValidate(UpdateTransactionCommand cmd)
     {
         // Add validation checks for the appropriate FKs existing
         var accountExists =
-            await context.FinancialAccounts.AnyAsync(a => a.FinancialAccountId == cmd.Dto.AccountId, ct);
+            context.FinancialAccounts.Any(a => a.FinancialAccountId == cmd.Dto.AccountId);
         if (!accountExists)
             AddError($"AccountId {cmd.Dto.AccountId} does not exist");
 
         var categoryExists =
-            await context.TransactionCategories.AnyAsync(c => c.TransactionCategoryId == cmd.Dto.CategoryId, ct);
+            context.TransactionCategories.Any(c => c.TransactionCategoryId == cmd.Dto.CategoryId);
         if (!categoryExists)
             AddError($"CategoryId {cmd.Dto.CategoryId} does not exist");
 
-        var vendorExists = await context.Vendors.AnyAsync(v => v.VendorId == cmd.Dto.VendorId, ct);
+        var vendorExists = context.Vendors.Any(v => v.VendorId == cmd.Dto.VendorId);
         if (!vendorExists)
             AddError($"VendorId {cmd.Dto.VendorId} does not exist");
+    }
 
-        if (ValidationFailed)
-        {
-            logger.Error("Validation failed for UpdateTransaction");
-            foreach (var f in ValidationFailures)
-                logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
+    public override void OnValidationFailed()
+    {
+        logger.LogValidationErrors(nameof(UpdateTransactionEndpoint), ValidationFailures);
+    }
 
-            await SendErrorsAsync(cancellation: ct);
-            return;
-        }
-
+    public override async Task HandleAsync(UpdateTransactionCommand cmd, CancellationToken ct)
+    {
         var transaction = await context.Transactions.FindAsync(cmd.Dto.Id, ct);
         if (transaction is null)
         {

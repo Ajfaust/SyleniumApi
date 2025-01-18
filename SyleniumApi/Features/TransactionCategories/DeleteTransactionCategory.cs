@@ -22,13 +22,13 @@ public class DeleteTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
         if (category is null)
         {
             logger.Error("Could not find transaction category with id {Id}", cmd.Id);
-            await SendNotFoundAsync();
+            await SendNotFoundAsync(ct);
             return;
         }
 
         context.Remove(category);
         await context.SaveChangesAsync(ct);
 
-        await SendNoContentAsync();
+        await SendNoContentAsync(ct);
     }
 }

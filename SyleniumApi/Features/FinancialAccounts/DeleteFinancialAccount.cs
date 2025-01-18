@@ -13,7 +13,6 @@ public class DeleteFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
     {
         Delete("/api/financial-accounts/{Id:int}");
         AllowAnonymous();
-        DontThrowIfValidationFails();
     }
 
     public override async Task HandleAsync(DeleteFinancialAccountCommand cmd, CancellationToken ct)

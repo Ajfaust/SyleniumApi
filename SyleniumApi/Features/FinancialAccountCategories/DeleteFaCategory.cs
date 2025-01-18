@@ -12,7 +12,6 @@ public class DeleteFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
     {
         Delete("/api/fa-categories/{Id:int}");
         AllowAnonymous();
-        DontThrowIfValidationFails();
     }
 
     public override async Task HandleAsync(DeleteFaCategoryCommand cmd, CancellationToken ct)
@@ -21,13 +20,13 @@ public class DeleteFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
         if (faCat == null)
         {
             logger.Error("Financial account category with id {Id} not found", cmd.Id);
-            await SendNotFoundAsync();
+            await SendNotFoundAsync(ct);
             return;
         }
 
         context.FinancialAccountCategories.Remove(faCat);
         await context.SaveChangesAsync(ct);
 
-        await SendNoContentAsync();
+        await SendNoContentAsync(ct);
     }
 }
