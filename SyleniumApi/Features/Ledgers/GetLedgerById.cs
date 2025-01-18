@@ -14,6 +14,7 @@ public class GetLedgerEndpoint(SyleniumDbContext context, ILogger logger)
     public override void Configure()
     {
         Get("ledgers/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 
@@ -23,12 +24,12 @@ public class GetLedgerEndpoint(SyleniumDbContext context, ILogger logger)
         if (ledger is null)
         {
             logger.Error("Ledger {id} not found.", req.Id);
-            await SendNotFoundAsync();
+            await SendNotFoundAsync(ct);
         }
         else
         {
             logger.Information("Successfully retrieved ledger {id}", ledger.LedgerId);
-            await SendOkAsync(new GetLedgerResponse(ledger.LedgerId, ledger.LedgerName));
+            await SendOkAsync(new GetLedgerResponse(ledger.LedgerId, ledger.LedgerName), ct);
         }
     }
 }

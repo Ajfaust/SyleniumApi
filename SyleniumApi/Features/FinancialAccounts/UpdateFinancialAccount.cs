@@ -24,6 +24,7 @@ public class UpdateFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
     public override void Configure()
     {
         Put("financial-accounts/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 

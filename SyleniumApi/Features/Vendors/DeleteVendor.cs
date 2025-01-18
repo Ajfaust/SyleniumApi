@@ -11,8 +11,8 @@ public class DeleteVendorEndpoint(SyleniumDbContext context, ILogger logger) : E
     public override void Configure()
     {
         Delete("vendors/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
-        DontThrowIfValidationFails();
     }
 
     public override async Task HandleAsync(DeleteVendorCommand cmd, CancellationToken ct)

@@ -36,8 +36,8 @@ public class UpdateTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
     public override void Configure()
     {
         Put("transaction-categories/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
-        DontThrowIfValidationFails();
     }
 
     public override void OnValidationFailed()
@@ -47,16 +47,6 @@ public class UpdateTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
 
     public override async Task HandleAsync(UpdateTransactionCategoryCommand cmd, CancellationToken ct)
     {
-        if (ValidationFailed)
-        {
-            logger.Error("Validation failed for UpdateTransactionCategory");
-            foreach (var f in ValidationFailures)
-                logger.Error("{0}: {1}", f.PropertyName, f.ErrorMessage);
-
-            await SendErrorsAsync(cancellation: ct);
-            return;
-        }
-
         var category = await context.TransactionCategories.FindAsync(cmd.Id);
         if (category is null)
         {

@@ -33,6 +33,7 @@ public class UpdateVendorEndpoint(SyleniumDbContext context, ILogger logger)
     public override void Configure()
     {
         Put("vendors/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 

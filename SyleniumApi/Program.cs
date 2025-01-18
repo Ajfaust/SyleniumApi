@@ -1,5 +1,7 @@
 using System.Reflection;
+using System.Text.Json.Serialization;
 using FastEndpoints;
+using FastEndpoints.Swagger;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using SyleniumApi.DbContexts;
@@ -21,11 +23,21 @@ builder.Services.AddCors(options =>
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 
 // Add services to the container.
-
+builder.Services.AddControllers()
+    .AddJsonOptions(options => { options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; });
 builder.Services.AddDbContext<SyleniumDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
 
-builder.Services.AddFastEndpoints();
+builder.Services
+    .AddFastEndpoints()
+    .SwaggerDocument(doc =>
+    {
+        doc.DocumentSettings = s =>
+        {
+            s.Title = "Sylenium API";
+            s.Version = "v1";
+        };
+    });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -48,7 +60,10 @@ app.UseCors(myPolicy);
 
 app.UseSerilogRequestLogging();
 
-app.UseFastEndpoints(c => { c.Endpoints.RoutePrefix = "api"; });
+app.MapControllers();
+
+app.UseFastEndpoints(c => { c.Endpoints.RoutePrefix = "api"; })
+    .UseSwaggerGen();
 
 app.UseHttpsRedirection();
 

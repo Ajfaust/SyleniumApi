@@ -25,6 +25,7 @@ public class GetFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
     public override void Configure()
     {
         Get("fa-categories/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 

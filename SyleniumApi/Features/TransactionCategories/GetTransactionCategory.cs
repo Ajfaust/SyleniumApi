@@ -14,6 +14,7 @@ public class GetTransactionCategoryEndpoint(SyleniumDbContext context, ILogger l
     public override void Configure()
     {
         Get("transaction-categories/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 

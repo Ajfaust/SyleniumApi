@@ -12,6 +12,7 @@ public class DeleteFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
     public override void Configure()
     {
         Delete("financial-accounts/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 
@@ -28,6 +29,6 @@ public class DeleteFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
         context.FinancialAccounts.Remove(fa);
         await context.SaveChangesAsync(ct);
 
-        await SendNoContentAsync();
+        await SendNoContentAsync(ct);
     }
 }

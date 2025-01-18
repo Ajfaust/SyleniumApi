@@ -50,6 +50,7 @@ public class UpdateFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
     public override void Configure()
     {
         Put("fa-categories/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 

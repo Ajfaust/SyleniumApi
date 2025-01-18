@@ -11,6 +11,7 @@ public class DeleteFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
     public override void Configure()
     {
         Delete("fa-categories/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 

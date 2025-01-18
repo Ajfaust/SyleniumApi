@@ -14,6 +14,7 @@ public class GetFinancialAccountEndpoint(SyleniumDbContext context, ILogger logg
     public override void Configure()
     {
         Get("financial-accounts/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 

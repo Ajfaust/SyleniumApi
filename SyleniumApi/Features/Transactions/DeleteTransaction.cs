@@ -11,6 +11,7 @@ public class DeleteTransactionEndpoint(SyleniumDbContext context, ILogger logger
     public override void Configure()
     {
         Delete("transactions/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 

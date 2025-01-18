@@ -11,23 +11,24 @@ public class DeleteLedgerEndpoint(SyleniumDbContext context, ILogger logger) : E
     public override void Configure()
     {
         Delete("ledgers/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 
     public override async Task HandleAsync(DeleteLedgerCommand req, CancellationToken ct)
     {
-        var ledger = await context.Ledgers.FindAsync(req.Id);
+        var ledger = await context.Ledgers.FindAsync(req.Id, ct);
         if (ledger is null)
         {
             logger.Error($"Ledger {req.Id} not found.");
-            await SendNotFoundAsync();
+            await SendNotFoundAsync(ct);
         }
         else
         {
             context.Ledgers.Remove(ledger);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(ct);
 
-            await SendNoContentAsync();
+            await SendNoContentAsync(ct);
         }
     }
 }

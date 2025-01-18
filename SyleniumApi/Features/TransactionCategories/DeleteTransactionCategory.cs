@@ -12,8 +12,8 @@ public class DeleteTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
     public override void Configure()
     {
         Delete("transaction-categories/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
-        DontThrowIfValidationFails();
     }
 
     public override async Task HandleAsync(DeleteTransactionCategoryCommand cmd, CancellationToken ct)

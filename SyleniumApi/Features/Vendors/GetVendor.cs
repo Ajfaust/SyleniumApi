@@ -13,6 +13,7 @@ public class GetVendorEndpoint(SyleniumDbContext context, ILogger logger) : Endp
     public override void Configure()
     {
         Get("vendors/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 

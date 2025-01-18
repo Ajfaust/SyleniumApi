@@ -33,6 +33,7 @@ public class UpdateLedgerEndpoint(SyleniumDbContext context, ILogger logger)
     public override void Configure()
     {
         Put("ledgers/{Id:int}");
+        Description(b => b.Produces(404));
         AllowAnonymous();
     }
 
