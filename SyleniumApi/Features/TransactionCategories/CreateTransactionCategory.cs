@@ -46,7 +46,7 @@ public class CreateTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
 {
     public override void Configure()
     {
-        Post("/api/transaction-categories");
+        Post("transaction-categories");
         AllowAnonymous();
     }
 

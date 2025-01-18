@@ -34,7 +34,7 @@ public class GetTransactionEndpoint(SyleniumDbContext context, ILogger logger)
 {
     public override void Configure()
     {
-        Get("/api/transactions/{Id:int}");
+        Get("transactions/{Id:int}");
         AllowAnonymous();
     }
 

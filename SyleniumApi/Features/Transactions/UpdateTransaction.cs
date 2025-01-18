@@ -45,7 +45,7 @@ public class UpdateTransactionEndpoint(SyleniumDbContext context, ILogger logger
 {
     public override void Configure()
     {
-        Put("/api/transactions/{Id:int}");
+        Put("transactions/{Id:int}");
         AllowAnonymous();
     }
 

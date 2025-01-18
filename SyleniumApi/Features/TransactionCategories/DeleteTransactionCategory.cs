@@ -11,7 +11,7 @@ public class DeleteTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
 {
     public override void Configure()
     {
-        Delete("/api/transaction-categories/{Id:int}");
+        Delete("transaction-categories/{Id:int}");
         AllowAnonymous();
         DontThrowIfValidationFails();
     }

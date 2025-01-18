@@ -35,7 +35,7 @@ public class UpdateTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
 {
     public override void Configure()
     {
-        Put("/api/transaction-categories/{Id:int}");
+        Put("transaction-categories/{Id:int}");
         AllowAnonymous();
         DontThrowIfValidationFails();
     }

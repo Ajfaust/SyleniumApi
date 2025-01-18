@@ -23,7 +23,7 @@ public class UpdateFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
 {
     public override void Configure()
     {
-        Put("/api/financial-accounts/{Id:int}");
+        Put("financial-accounts/{Id:int}");
         AllowAnonymous();
     }
 

@@ -10,7 +10,7 @@ public class DeleteFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
 {
     public override void Configure()
     {
-        Delete("/api/fa-categories/{Id:int}");
+        Delete("fa-categories/{Id:int}");
         AllowAnonymous();
     }
 

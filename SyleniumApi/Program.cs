@@ -48,7 +48,7 @@ app.UseCors(myPolicy);
 
 app.UseSerilogRequestLogging();
 
-app.UseFastEndpoints();
+app.UseFastEndpoints(c => { c.Endpoints.RoutePrefix = "api"; });
 
 app.UseHttpsRedirection();
 

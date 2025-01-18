@@ -10,7 +10,7 @@ public class DeleteTransactionEndpoint(SyleniumDbContext context, ILogger logger
 {
     public override void Configure()
     {
-        Delete("/api/transactions/{Id:int}");
+        Delete("transactions/{Id:int}");
         AllowAnonymous();
     }
 

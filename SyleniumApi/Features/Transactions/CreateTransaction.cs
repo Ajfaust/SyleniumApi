@@ -61,7 +61,7 @@ public class CreateTransactionEndpoint(SyleniumDbContext context, ILogger logger
 {
     public override void Configure()
     {
-        Post("/api/transactions");
+        Post("transactions");
         AllowAnonymous();
     }
 

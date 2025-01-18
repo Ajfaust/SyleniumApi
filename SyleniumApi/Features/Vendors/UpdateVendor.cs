@@ -32,7 +32,7 @@ public class UpdateVendorEndpoint(SyleniumDbContext context, ILogger logger)
 {
     public override void Configure()
     {
-        Put("/api/vendors/{Id:int}");
+        Put("vendors/{Id:int}");
         AllowAnonymous();
     }
 

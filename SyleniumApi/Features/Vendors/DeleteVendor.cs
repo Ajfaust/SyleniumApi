@@ -10,7 +10,7 @@ public class DeleteVendorEndpoint(SyleniumDbContext context, ILogger logger) : E
 {
     public override void Configure()
     {
-        Delete("/api/vendors/{Id:int}");
+        Delete("vendors/{Id:int}");
         AllowAnonymous();
         DontThrowIfValidationFails();
     }

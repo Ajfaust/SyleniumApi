@@ -13,7 +13,7 @@ public class GetFinancialAccountEndpoint(SyleniumDbContext context, ILogger logg
 {
     public override void Configure()
     {
-        Get("/api/financial-accounts/{Id:int}");
+        Get("financial-accounts/{Id:int}");
         AllowAnonymous();
     }
 

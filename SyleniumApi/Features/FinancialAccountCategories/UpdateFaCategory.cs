@@ -49,7 +49,7 @@ public class UpdateFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
 {
     public override void Configure()
     {
-        Put("/api/fa-categories/{Id:int}");
+        Put("fa-categories/{Id:int}");
         AllowAnonymous();
     }
 

@@ -13,7 +13,7 @@ public class GetTransactionCategoryEndpoint(SyleniumDbContext context, ILogger l
 {
     public override void Configure()
     {
-        Get("/api/transaction-categories/{Id:int}");
+        Get("transaction-categories/{Id:int}");
         AllowAnonymous();
     }
 

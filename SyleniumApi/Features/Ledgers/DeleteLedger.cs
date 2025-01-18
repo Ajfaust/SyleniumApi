@@ -10,7 +10,7 @@ public class DeleteLedgerEndpoint(SyleniumDbContext context, ILogger logger) : E
 {
     public override void Configure()
     {
-        Delete("/api/ledgers/{Id:int}");
+        Delete("ledgers/{Id:int}");
         AllowAnonymous();
     }
 

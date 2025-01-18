@@ -48,7 +48,7 @@ public class CreateFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
 {
     public override void Configure()
     {
-        Post("/api/financial-accounts");
+        Post("financial-accounts");
         AllowAnonymous();
     }
 

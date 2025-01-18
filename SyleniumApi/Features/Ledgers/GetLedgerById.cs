@@ -13,7 +13,7 @@ public class GetLedgerEndpoint(SyleniumDbContext context, ILogger logger)
 {
     public override void Configure()
     {
-        Get("/api/ledgers/{Id:int}");
+        Get("ledgers/{Id:int}");
         AllowAnonymous();
     }
 

@@ -11,7 +11,7 @@ public class DeleteFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
 {
     public override void Configure()
     {
-        Delete("/api/financial-accounts/{Id:int}");
+        Delete("financial-accounts/{Id:int}");
         AllowAnonymous();
     }
 

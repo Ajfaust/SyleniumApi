@@ -45,7 +45,7 @@ public class CreateLedgerEndpoint(SyleniumDbContext context, ILogger logger)
 {
     public override void Configure()
     {
-        Post("/api/ledgers");
+        Post("ledgers");
         AllowAnonymous();
     }
 

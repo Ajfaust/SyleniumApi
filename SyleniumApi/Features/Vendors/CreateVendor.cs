@@ -42,7 +42,7 @@ public class CreateVendorEndpoint(SyleniumDbContext context, ILogger logger)
 {
     public override void Configure()
     {
-        Post("/api/vendors");
+        Post("vendors");
         AllowAnonymous();
     }
 
