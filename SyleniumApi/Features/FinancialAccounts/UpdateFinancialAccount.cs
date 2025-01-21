@@ -43,11 +43,11 @@ public class UpdateFinancialAccountEndpoint(SyleniumDbContext context, ILogger l
             return;
         }
 
-        fa.FinancialAccountName = cmd.Name;
+        fa.Name = cmd.Name;
         context.FinancialAccounts.Update(fa);
         await context.SaveChangesAsync(ct);
 
-        await SendAsync(new UpdateFinancialAccountResponse(fa.FinancialAccountId, fa.FinancialAccountName),
+        await SendAsync(new UpdateFinancialAccountResponse(fa.Id, fa.Name),
             cancellation: ct);
     }
 }

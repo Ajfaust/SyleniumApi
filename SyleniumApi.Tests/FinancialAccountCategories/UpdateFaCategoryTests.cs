@@ -31,8 +31,8 @@ public class UpdateFaCategoryTests(IntegrationTestFactory factory) : IClassFixtu
         updatedFaCategory.Should().NotBeNull();
 
         await _context.Entry(updatedFaCategory!).ReloadAsync(); // Reload the entity to get the updated values
-        updatedFaCategory!.FinancialAccountCategoryName.Should().Be(newName);
-        updatedFaCategory!.FinancialCategoryType.Should().Be(newType);
+        updatedFaCategory!.Name.Should().Be(newName);
+        updatedFaCategory!.Type.Should().Be(newType);
     }
 
     [Fact]

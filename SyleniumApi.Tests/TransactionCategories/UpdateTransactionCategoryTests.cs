@@ -24,12 +24,12 @@ public class UpdateTransactionCategoryTests(IntegrationTestFactory factory) : IC
         {
             LedgerId = DefaultTestValues.Id,
             ParentCategoryId = null,
-            TransactionCategoryName = "Test Subcategory"
+            Name = "Test Subcategory"
         };
         _context.TransactionCategories.Add(newCategory);
         await _context.SaveChangesAsync(true);
 
-        var id = newCategory.TransactionCategoryId;
+        var id = newCategory.Id;
         var command = new UpdateTransactionCategoryCommand(id, DefaultTestValues.Id, parentId, name);
 
         // Act
@@ -42,7 +42,7 @@ public class UpdateTransactionCategoryTests(IntegrationTestFactory factory) : IC
         update.Should().NotBeNull();
 
         await _context.Entry(update!).ReloadAsync();
-        update!.TransactionCategoryName.Should().Be(name);
+        update!.Name.Should().Be(name);
         update.ParentCategoryId.Should().Be(parentId);
     }
 
@@ -55,16 +55,16 @@ public class UpdateTransactionCategoryTests(IntegrationTestFactory factory) : IC
         {
             LedgerId = DefaultTestValues.Id,
             ParentCategoryId = null,
-            TransactionCategoryName = "Test Subcategory"
+            Name = "Test Subcategory"
         };
         _context.TransactionCategories.Add(newCategory);
         await _context.SaveChangesAsync(true);
         var command =
-            new UpdateTransactionCategoryCommand(newCategory.TransactionCategoryId, DefaultTestValues.Id, parentId,
+            new UpdateTransactionCategoryCommand(newCategory.Id, DefaultTestValues.Id, parentId,
                 name);
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/api/transaction-categories/{newCategory.TransactionCategoryId}",
+        var response = await _client.PutAsJsonAsync($"/api/transaction-categories/{newCategory.Id}",
             command);
 
         // Assert

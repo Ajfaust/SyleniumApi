@@ -32,7 +32,7 @@ public class CreateFinancialAccountTests(IntegrationTestFactory factory) : IClas
         var financialAccount = await _context.FinancialAccounts.FindAsync(id);
 
         financialAccount.Should().NotBeNull();
-        financialAccount!.FinancialAccountId.Should().Be(id);
+        financialAccount!.Id.Should().Be(id);
     }
 
     [Fact]

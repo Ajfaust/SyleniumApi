@@ -15,7 +15,7 @@ public class UpdateLedgerMapper : Mapper<UpdateLedgerCommand, UpdateLedgerRespon
 {
     public override Task<UpdateLedgerResponse> FromEntityAsync(Ledger l, CancellationToken ct = default)
     {
-        return Task.FromResult(new UpdateLedgerResponse(l.LedgerId, l.LedgerName));
+        return Task.FromResult(new UpdateLedgerResponse(l.Id, l.Name));
     }
 }
 
@@ -60,7 +60,7 @@ public class UpdateLedgerEndpoint(SyleniumDbContext context, ILogger logger)
             return;
         }
 
-        ledger.LedgerName = cmd.Name;
+        ledger.Name = cmd.Name;
         context.Ledgers.Update(ledger);
         await context.SaveChangesAsync(ct);
 

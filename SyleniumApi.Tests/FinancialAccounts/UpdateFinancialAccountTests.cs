@@ -29,7 +29,7 @@ public class UpdateFinancialAccountTests(IntegrationTestFactory factory) : IClas
         financialAccount.Should().NotBeNull();
 
         await _context.Entry(financialAccount!).ReloadAsync();
-        financialAccount!.FinancialAccountName.Should().Be(command.Name);
+        financialAccount!.Name.Should().Be(command.Name);
     }
 
     [Fact]

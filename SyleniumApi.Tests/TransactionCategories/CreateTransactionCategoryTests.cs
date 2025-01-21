@@ -33,7 +33,7 @@ public class CreateTransactionCategoryTests(IntegrationTestFactory factory) : IC
 
         var category = await _context.TransactionCategories.FindAsync(id);
         category.Should().NotBeNull();
-        category!.TransactionCategoryId.Should().Be(id);
+        category!.Id.Should().Be(id);
         category!.ParentCategoryId.Should().Be(parentId);
     }
 }

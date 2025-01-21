@@ -21,15 +21,15 @@ public class CreateTransactionCategoryMapper : Mapper<CreateTransactionCategoryC
         {
             LedgerId = cmd.LedgerId,
             ParentCategoryId = cmd.ParentId,
-            TransactionCategoryName = cmd.Name
+            Name = cmd.Name
         });
     }
 
     public override Task<CreateTransactionCategoryResponse> FromEntityAsync(TransactionCategory e,
         CancellationToken ct = default)
     {
-        return Task.FromResult(new CreateTransactionCategoryResponse(e.TransactionCategoryId, e.ParentCategoryId,
-            e.TransactionCategoryName));
+        return Task.FromResult(new CreateTransactionCategoryResponse(e.Id, e.ParentCategoryId,
+            e.Name));
     }
 }
 

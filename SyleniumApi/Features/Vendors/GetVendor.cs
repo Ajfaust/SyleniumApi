@@ -27,7 +27,7 @@ public class GetVendorEndpoint(SyleniumDbContext context, ILogger logger) : Endp
             return;
         }
 
-        var response = new GetVendorResponse(vendor.VendorId, vendor.VendorName);
+        var response = new GetVendorResponse(vendor.Id, vendor.Name);
         await SendAsync(response, cancellation: ct);
     }
 }

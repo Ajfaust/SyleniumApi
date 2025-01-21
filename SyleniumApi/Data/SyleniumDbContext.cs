@@ -52,7 +52,7 @@ public class SyleniumDbContext(DbContextOptions options) : DbContext(options)
             .HasForeignKey(e => e.ParentCategoryId);
 
         modelBuilder.Entity<TransactionCategory>()
-            .HasIndex(e => new { Name = e.TransactionCategoryName, e.ParentCategoryId }).IsUnique();
+            .HasIndex(e => new { Name = e.Name, e.ParentCategoryId }).IsUnique();
 
         base.OnModelCreating(modelBuilder);
     }

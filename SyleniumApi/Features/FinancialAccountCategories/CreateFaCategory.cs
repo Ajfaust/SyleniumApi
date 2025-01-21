@@ -20,8 +20,8 @@ public class CreateFaCategoryMapper :
         return Task.FromResult(new FinancialAccountCategory
         {
             LedgerId = cmd.LedgerId,
-            FinancialAccountCategoryName = cmd.Name,
-            FinancialCategoryType = cmd.Type
+            Name = cmd.Name,
+            Type = cmd.Type
         });
     }
 
@@ -29,9 +29,9 @@ public class CreateFaCategoryMapper :
         CancellationToken ct = default)
     {
         return Task.FromResult(new CreateFaCategoryResponse(
-            entity.FinancialAccountCategoryId,
-            entity.FinancialAccountCategoryName,
-            entity.FinancialCategoryType
+            entity.Id,
+            entity.Name,
+            entity.Type
         ));
     }
 }

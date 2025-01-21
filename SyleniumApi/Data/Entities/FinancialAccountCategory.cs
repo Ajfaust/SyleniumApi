@@ -8,14 +8,14 @@ public class FinancialAccountCategory
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int FinancialAccountCategoryId { get; set; }
+    public int Id { get; set; }
 
     [Required]
     [MaxLength(200)]
-    public required string FinancialAccountCategoryName { get; set; }
+    public required string Name { get; set; }
 
     [Required]
-    public required FinancialCategoryType FinancialCategoryType { get; set; }
+    public required FinancialCategoryType Type { get; set; }
 
     #region Ledger Relation
 

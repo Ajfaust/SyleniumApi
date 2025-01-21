@@ -20,7 +20,7 @@ public class CreateFinancialAccountMapper : Mapper<CreateFinancialAccountCommand
         return Task.FromResult(new FinancialAccount
         {
             LedgerId = cmd.LedgerId,
-            FinancialAccountName = cmd.Name,
+            Name = cmd.Name,
             FinancialAccountCategoryId = cmd.FaCategoryId
         });
     }
@@ -28,7 +28,7 @@ public class CreateFinancialAccountMapper : Mapper<CreateFinancialAccountCommand
     public override Task<CreateFinancialAccountResponse> FromEntityAsync(FinancialAccount e,
         CancellationToken ct = default)
     {
-        return Task.FromResult(new CreateFinancialAccountResponse(e.FinancialAccountId, e.FinancialAccountName,
+        return Task.FromResult(new CreateFinancialAccountResponse(e.Id, e.Name,
             e.FinancialAccountCategoryId));
     }
 }

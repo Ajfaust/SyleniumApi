@@ -12,11 +12,11 @@ public class TransactionCategory
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [ForeignKey(nameof(ParentCategoryId))]
-    public int TransactionCategoryId { get; set; }
+    public int Id { get; set; }
 
     [Required]
     [MaxLength(200)]
-    public required string TransactionCategoryName { get; set; }
+    public required string Name { get; set; }
 
     #region Transaction Relation
 

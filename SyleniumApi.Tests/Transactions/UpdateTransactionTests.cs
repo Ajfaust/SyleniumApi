@@ -20,7 +20,7 @@ public class UpdateTransactionTests(IntegrationTestFactory factory) : IClassFixt
     {
         // Arrange
         var transaction = _fixture.Build<Transaction>()
-            .Without(x => x.TransactionId)
+            .Without(x => x.Id)
             .With(x => x.FinancialAccountId, DefaultTestValues.Id)
             .With(x => x.TransactionCategoryId, DefaultTestValues.Id)
             .With(x => x.VendorId, DefaultTestValues.Id)
@@ -30,7 +30,7 @@ public class UpdateTransactionTests(IntegrationTestFactory factory) : IClassFixt
         await _context.SaveChangesAsync(true);
 
         var transactionDto = _fixture.Build<TransactionDto>()
-            .With(x => x.Id, transaction.TransactionId)
+            .With(x => x.Id, transaction.Id)
             .With(x => x.AccountId, transaction.FinancialAccountId)
             .With(x => x.CategoryId, transaction.TransactionCategoryId)
             .With(x => x.VendorId, transaction.VendorId)
@@ -65,7 +65,7 @@ public class UpdateTransactionTests(IntegrationTestFactory factory) : IClassFixt
     {
         // Arrange
         var transaction = _fixture.Build<Transaction>()
-            .Without(x => x.TransactionId)
+            .Without(x => x.Id)
             .With(x => x.FinancialAccountId, DefaultTestValues.Id)
             .With(x => x.TransactionCategoryId, DefaultTestValues.Id)
             .With(x => x.VendorId, DefaultTestValues.Id)
@@ -75,7 +75,7 @@ public class UpdateTransactionTests(IntegrationTestFactory factory) : IClassFixt
         await _context.SaveChangesAsync(true);
 
         var dto = _fixture.Build<TransactionDto>()
-            .With(x => x.Id, transaction.TransactionId)
+            .With(x => x.Id, transaction.Id)
             .With(x => x.AccountId, accountId)
             .With(x => x.CategoryId, categoryId)
             .With(x => x.VendorId, vendorId)
@@ -85,7 +85,7 @@ public class UpdateTransactionTests(IntegrationTestFactory factory) : IClassFixt
         var command = new UpdateTransactionCommand(dto);
 
         // Act
-        var response = await _client.PutAsJsonAsync($"/api/transactions/{transaction.TransactionId}", command);
+        var response = await _client.PutAsJsonAsync($"/api/transactions/{transaction.Id}", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

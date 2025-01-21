@@ -28,8 +28,8 @@ public class GetLedgerEndpoint(SyleniumDbContext context, ILogger logger)
         }
         else
         {
-            logger.Information("Successfully retrieved ledger {id}", ledger.LedgerId);
-            await SendOkAsync(new GetLedgerResponse(ledger.LedgerId, ledger.LedgerName), ct);
+            logger.Information("Successfully retrieved ledger {id}", ledger.Id);
+            await SendOkAsync(new GetLedgerResponse(ledger.Id, ledger.Name), ct);
         }
     }
 }

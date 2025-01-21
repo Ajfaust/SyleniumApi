@@ -15,7 +15,7 @@ public class GetTransactionMapper : Mapper<GetTransactionRequest, GetTransaction
     {
         var dto = new TransactionDto
         {
-            Id = e.TransactionId,
+            Id = e.Id,
             AccountId = e.FinancialAccountId,
             CategoryId = e.TransactionCategoryId,
             VendorId = e.VendorId,

@@ -17,7 +17,7 @@ public class UpdateTransactionMapper : Mapper<UpdateTransactionCommand, UpdateTr
     {
         var dto = new TransactionDto
         {
-            Id = e.TransactionId,
+            Id = e.Id,
             AccountId = e.FinancialAccountId,
             CategoryId = e.TransactionCategoryId,
             Date = e.Date,
@@ -54,16 +54,16 @@ public class UpdateTransactionEndpoint(SyleniumDbContext context, ILogger logger
     {
         // Add validation checks for the appropriate FKs existing
         var accountExists =
-            context.FinancialAccounts.Any(a => a.FinancialAccountId == cmd.Dto.AccountId);
+            context.FinancialAccounts.Any(a => a.Id == cmd.Dto.AccountId);
         if (!accountExists)
             AddError($"AccountId {cmd.Dto.AccountId} does not exist");
 
         var categoryExists =
-            context.TransactionCategories.Any(c => c.TransactionCategoryId == cmd.Dto.CategoryId);
+            context.TransactionCategories.Any(c => c.Id == cmd.Dto.CategoryId);
         if (!categoryExists)
             AddError($"CategoryId {cmd.Dto.CategoryId} does not exist");
 
-        var vendorExists = context.Vendors.Any(v => v.VendorId == cmd.Dto.VendorId);
+        var vendorExists = context.Vendors.Any(v => v.Id == cmd.Dto.VendorId);
         if (!vendorExists)
             AddError($"VendorId {cmd.Dto.VendorId} does not exist");
     }

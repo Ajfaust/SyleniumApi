@@ -71,7 +71,7 @@ public static class ServiceCollectionExtensions
         // Add one of each entity for foreign key constraints
         context.Ledgers.Add(new Ledger
         {
-            LedgerName = "Test Ledger",
+            Name = "Test Ledger",
             CreatedDate = DateTime.UtcNow
         });
         context.SaveChanges();
@@ -79,8 +79,8 @@ public static class ServiceCollectionExtensions
         context.FinancialAccountCategories.Add(new FinancialAccountCategory
         {
             LedgerId = DefaultTestValues.Id,
-            FinancialCategoryType = FinancialCategoryType.Asset,
-            FinancialAccountCategoryName = "Test Category"
+            Type = FinancialCategoryType.Asset,
+            Name = "Test Category"
         });
         context.SaveChanges();
 
@@ -88,14 +88,14 @@ public static class ServiceCollectionExtensions
         {
             LedgerId = DefaultTestValues.Id,
             FinancialAccountCategoryId = DefaultTestValues.Id,
-            FinancialAccountName = "Test Account"
+            Name = "Test Account"
         });
         context.SaveChanges();
 
         context.Vendors.Add(new Vendor
         {
             LedgerId = DefaultTestValues.Id,
-            VendorName = "Test Vendor"
+            Name = "Test Vendor"
         });
         context.SaveChanges();
 
@@ -103,7 +103,7 @@ public static class ServiceCollectionExtensions
         {
             LedgerId = DefaultTestValues.Id,
             ParentCategoryId = null,
-            TransactionCategoryName = "Test Category"
+            Name = "Test Category"
         });
         context.SaveChanges();
     }

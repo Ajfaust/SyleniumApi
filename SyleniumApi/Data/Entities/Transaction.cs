@@ -8,7 +8,7 @@ public class Transaction
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int TransactionId { get; set; }
+    public int Id { get; set; }
 
     [Required]
     public DateTime Date { get; set; }

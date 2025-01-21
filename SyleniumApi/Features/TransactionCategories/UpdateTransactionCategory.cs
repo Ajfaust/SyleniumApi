@@ -17,8 +17,8 @@ public class UpdateTransactionCategoryMapper : Mapper<UpdateTransactionCategoryC
     public override Task<UpdateTransactionCategoryResponse> FromEntityAsync(TransactionCategory e,
         CancellationToken ct = default)
     {
-        return Task.FromResult(new UpdateTransactionCategoryResponse(e.TransactionCategoryId, e.ParentCategoryId,
-            e.TransactionCategoryName));
+        return Task.FromResult(new UpdateTransactionCategoryResponse(e.Id, e.ParentCategoryId,
+            e.Name));
     }
 }
 
@@ -69,7 +69,7 @@ public class UpdateTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
         }
 
         category.ParentCategoryId = cmd.ParentId;
-        category.TransactionCategoryName = cmd.Name;
+        category.Name = cmd.Name;
 
         context.TransactionCategories.Update(category);
         await context.SaveChangesAsync(ct);

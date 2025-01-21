@@ -27,14 +27,14 @@ public class GetTransactionTests(IntegrationTestFactory factory) : IClassFixture
         await _context.SaveChangesAsync(true);
 
         // Act
-        var response = await _client.GetAsync($"/api/transactions/{transaction.TransactionId}");
+        var response = await _client.GetAsync($"/api/transactions/{transaction.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
         var id = JsonConvert.DeserializeObject<GetTransactionResponse>(content)?.Dto.Id;
         id.Should().NotBeNull();
-        id!.Should().Be(transaction.TransactionId);
+        id!.Should().Be(transaction.Id);
     }
 
     [Fact]

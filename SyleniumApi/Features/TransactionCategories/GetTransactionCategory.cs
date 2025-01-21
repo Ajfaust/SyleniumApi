@@ -28,8 +28,8 @@ public class GetTransactionCategoryEndpoint(SyleniumDbContext context, ILogger l
             return;
         }
 
-        var response = new GetTransactionCategoryResponse(category.TransactionCategoryId, category.ParentCategoryId,
-            category.TransactionCategoryName);
+        var response = new GetTransactionCategoryResponse(category.Id, category.ParentCategoryId,
+            category.Name);
         await SendOkAsync(response, ct);
     }
 }

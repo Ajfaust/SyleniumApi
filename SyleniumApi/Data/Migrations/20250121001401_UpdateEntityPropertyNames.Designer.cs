@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SyleniumApi.DbContexts;
@@ -11,9 +12,11 @@ using SyleniumApi.DbContexts;
 namespace SyleniumApi.Data.Migrations
 {
     [DbContext(typeof(SyleniumDbContext))]
-    partial class SyleniumDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250121001401_UpdateEntityPropertyNames")]
+    partial class UpdateEntityPropertyNames
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

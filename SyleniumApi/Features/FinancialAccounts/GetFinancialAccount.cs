@@ -28,7 +28,7 @@ public class GetFinancialAccountEndpoint(SyleniumDbContext context, ILogger logg
             return;
         }
 
-        var response = new GetFinancialAccountResponse(fa.FinancialAccountId, fa.FinancialAccountName);
+        var response = new GetFinancialAccountResponse(fa.Id, fa.Name);
         await SendAsync(response);
     }
 }

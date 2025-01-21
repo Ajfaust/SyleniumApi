@@ -20,18 +20,18 @@ public class
         return Task.FromResult(new FinancialAccountCategory
         {
             LedgerId = cmd.LedgerId,
-            FinancialAccountCategoryId = cmd.Id,
-            FinancialAccountCategoryName = cmd.Name,
-            FinancialCategoryType = cmd.Type
+            Id = cmd.Id,
+            Name = cmd.Name,
+            Type = cmd.Type
         });
     }
 
     public override Task<UpdateFaCategoryResponse> FromEntityAsync(FinancialAccountCategory fac,
         CancellationToken ct = default)
     {
-        return Task.FromResult(new UpdateFaCategoryResponse(fac.FinancialAccountCategoryId,
-            fac.FinancialAccountCategoryName,
-            fac.FinancialCategoryType));
+        return Task.FromResult(new UpdateFaCategoryResponse(fac.Id,
+            fac.Name,
+            fac.Type));
     }
 }
 
@@ -70,8 +70,8 @@ public class UpdateFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
         }
 
         // Only change allowed fields
-        category.FinancialAccountCategoryName = cmd.Name;
-        category.FinancialCategoryType = cmd.Type;
+        category.Name = cmd.Name;
+        category.Type = cmd.Type;
 
         context.FinancialAccountCategories.Update(category);
         await context.SaveChangesAsync(ct);

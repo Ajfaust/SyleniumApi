@@ -25,7 +25,7 @@ public class UpdateLedgerTests(IntegrationTestFactory factory) : IClassFixture<I
 
         await _context.Entry(ledger!).ReloadAsync();
 
-        ledger!.LedgerName.Should().Be("New Name");
+        ledger!.Name.Should().Be("New Name");
     }
 
     [Fact]

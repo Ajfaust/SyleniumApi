@@ -8,11 +8,11 @@ public class FinancialAccount
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int FinancialAccountId { get; set; }
+    public int Id { get; set; }
 
     [Required]
     [MaxLength(200)]
-    public required string FinancialAccountName { get; set; }
+    public required string Name { get; set; }
 
     #region Transaction Relation
 

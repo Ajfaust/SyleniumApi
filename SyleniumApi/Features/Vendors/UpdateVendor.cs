@@ -15,7 +15,7 @@ public class UpdateVendorMapper : Mapper<UpdateVendorCommand, UpdateVendorRespon
 {
     public override Task<UpdateVendorResponse> FromEntityAsync(Vendor v, CancellationToken ct = default)
     {
-        return Task.FromResult(new UpdateVendorResponse(v.VendorId, v.VendorName));
+        return Task.FromResult(new UpdateVendorResponse(v.Id, v.Name));
     }
 }
 
@@ -52,7 +52,7 @@ public class UpdateVendorEndpoint(SyleniumDbContext context, ILogger logger)
             return;
         }
 
-        vendor.VendorName = cmd.Name;
+        vendor.Name = cmd.Name;
         context.Vendors.Update(vendor);
         await context.SaveChangesAsync(ct);
 

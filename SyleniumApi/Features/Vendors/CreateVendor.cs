@@ -18,13 +18,13 @@ public class CreateVendorMapper : Mapper<CreateVendorCommand, CreateVendorRespon
         return Task.FromResult(new Vendor
         {
             LedgerId = cmd.LedgerId,
-            VendorName = cmd.Name
+            Name = cmd.Name
         });
     }
 
     public override Task<CreateVendorResponse> FromEntityAsync(Vendor v, CancellationToken ct = default)
     {
-        return Task.FromResult(new CreateVendorResponse(v.VendorId, v.VendorName));
+        return Task.FromResult(new CreateVendorResponse(v.Id, v.Name));
     }
 }
 

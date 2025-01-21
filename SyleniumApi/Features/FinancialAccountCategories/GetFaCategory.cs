@@ -15,7 +15,7 @@ public class GetFaCategoryMapper : Mapper<GetFaCategoryRequest, GetFaCategoryRes
         CancellationToken ct = default)
     {
         return Task.FromResult(new GetFaCategoryResponse(
-            cat.FinancialAccountCategoryId, cat.FinancialAccountCategoryName, cat.FinancialCategoryType));
+            cat.Id, cat.Name, cat.Type));
     }
 }
 

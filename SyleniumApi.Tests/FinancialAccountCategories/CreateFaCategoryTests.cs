@@ -34,7 +34,7 @@ public class CreateFaCategoryTests(IntegrationTestFactory factory)
 
         var faCategory = await _context.FinancialAccountCategories.FindAsync(faCategoryId);
         faCategory.Should().NotBeNull();
-        faCategory!.FinancialAccountCategoryId.Should().Be(faCategoryId);
+        faCategory!.Id.Should().Be(faCategoryId);
     }
 
     [Fact]

@@ -18,7 +18,7 @@ public class DeleteTransactionTests(IntegrationTestFactory factory) : IClassFixt
     {
         // Arrange
         var transaction = _fixture.Build<Transaction>()
-            .Without(x => x.TransactionId)
+            .Without(x => x.Id)
             .With(x => x.FinancialAccountId, DefaultTestValues.Id)
             .With(x => x.TransactionCategoryId, DefaultTestValues.Id)
             .With(x => x.VendorId, DefaultTestValues.Id)
@@ -27,12 +27,12 @@ public class DeleteTransactionTests(IntegrationTestFactory factory) : IClassFixt
         await _context.SaveChangesAsync(true);
 
         // Act
-        var response = await _client.DeleteAsync($"/api/transactions/{transaction.TransactionId}");
+        var response = await _client.DeleteAsync($"/api/transactions/{transaction.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var t = _context.Transactions.Any(t => t.TransactionId == transaction.TransactionId);
+        var t = _context.Transactions.Any(t => t.Id == transaction.Id);
         t.Should().BeFalse();
     }
     

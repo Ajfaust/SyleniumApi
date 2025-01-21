@@ -8,11 +8,11 @@ public class Vendor
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int VendorId { get; set; }
+    public int Id { get; set; }
 
     [Required]
     [MaxLength(200)]
-    public required string VendorName { get; set; }
+    public required string Name { get; set; }
 
     #region Transactions Relationship
 

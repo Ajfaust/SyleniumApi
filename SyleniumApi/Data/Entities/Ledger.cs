@@ -8,11 +8,11 @@ public class Ledger
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int LedgerId { get; set; }
+    public int Id { get; set; }
 
     [Required]
     [MaxLength(200)]
-    public required string LedgerName { get; set; }
+    public required string Name { get; set; }
 
     public DateTime CreatedDate { get; set; }
 

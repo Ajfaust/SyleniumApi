@@ -30,7 +30,7 @@ public class UpdateVendorTests(IntegrationTestFactory factory) : IClassFixture<I
         vendor.Should().NotBeNull();
 
         await _context.Entry(vendor!).ReloadAsync();
-        vendor!.VendorName.Should().Be(newName);
+        vendor!.Name.Should().Be(newName);
     }
 
     [Fact]

@@ -17,14 +17,14 @@ public class CreateLedgerMapper : Mapper<CreateLedgerCommand, CreateLedgerRespon
     {
         return Task.FromResult(new Ledger
         {
-            LedgerName = cmd.Name,
+            Name = cmd.Name,
             CreatedDate = DateTime.UtcNow
         });
     }
 
     public override Task<CreateLedgerResponse> FromEntityAsync(Ledger l, CancellationToken ct)
     {
-        return Task.FromResult(new CreateLedgerResponse(l.LedgerId, l.LedgerName));
+        return Task.FromResult(new CreateLedgerResponse(l.Id, l.Name));
     }
 }
 
