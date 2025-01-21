@@ -1,0 +1,29 @@
+﻿services:
+  sylenium-api:
+    container_name: sylenium-api
+    image: syleniumapi
+    build:
+      context: .
+      dockerfile: SyleniumApi/Dockerfile
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      - db
+  
+  db:
+    container_name: sylenium-db
+    image: postgres:17-alpine
+    environment:
+      "POSTGRES_USER": "syleniumdev"
+      "POSTGRES_PASSWORD": "syldev"
+      "POSTGRES_DB": "syleniumdev"
+    ports:
+      - "5432:5432"
+    # Persist postgres data
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+    
