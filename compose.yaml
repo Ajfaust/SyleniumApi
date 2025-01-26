@@ -18,8 +18,6 @@
       "POSTGRES_USER": "syleniumdev"
       "POSTGRES_PASSWORD": "syldev"
       "POSTGRES_DB": "syleniumdev"
-    ports:
-      - "5432:5432"
     # Persist postgres data
     volumes:
       - postgres_data:/var/lib/postgresql/data

@@ -1,5 +1,3 @@
-using System.Reflection;
-using System.Text.Json.Serialization;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Microsoft.EntityFrameworkCore;
@@ -23,8 +21,8 @@ builder.Services.AddCors(options =>
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 
 // Add services to the container.
-builder.Services.AddControllers()
-    .AddJsonOptions(options => { options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; });
+// builder.Services.AddControllers()
+//     .AddJsonOptions(options => { options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; });
 builder.Services.AddDbContext<SyleniumDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("SyleniumDB")));
 
@@ -40,27 +38,27 @@ builder.Services
     });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
-});
+// builder.Services.AddEndpointsApiExplorer();
+// builder.Services.AddSwaggerGen(options =>
+// {
+//     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+//     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+// });
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// if (app.Environment.IsDevelopment())
+// {
+//     app.UseSwagger();
+//     app.UseSwaggerUI();
+// }
 
 app.UseCors(myPolicy);
 
 app.UseSerilogRequestLogging();
 
-app.MapControllers();
+// app.MapControllers();
 
 app.UseFastEndpoints(c => { c.Endpoints.RoutePrefix = "api"; })
     .UseSwaggerGen();

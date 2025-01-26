@@ -1,6 +1,7 @@
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Features.FinancialAccountCategories;
 using SyleniumApi.Features.FinancialAccounts;
 using ILogger = Serilog.ILogger;
 
@@ -35,7 +36,12 @@ public class GetLedgerAccountsEndpoint(SyleniumDbContext context, ILogger logger
         var accounts = context
             .FinancialAccounts
             .Where(fa => fa.LedgerId == req.Id)
-            .Select(fa => new GetFinancialAccountResponse(fa.Id, fa.Name))
+            .Include(fa => fa.FinancialAccountCategory)
+            .Select(fa => new GetFinancialAccountResponse(
+                fa.Id,
+                new GetFaCategoryResponse(fa.FinancialAccountCategory!.Id, fa.FinancialAccountCategory.Name,
+                    fa.FinancialAccountCategory.Type),
+                fa.Name))
             .ToList();
 
         await SendAsync(new GetLedgerAccountsResponse(accounts), cancellation: ct);
