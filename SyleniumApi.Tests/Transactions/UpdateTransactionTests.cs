@@ -29,7 +29,7 @@ public class UpdateTransactionTests(IntegrationTestFactory factory) : IClassFixt
         await _context.Transactions.AddAsync(transaction);
         await _context.SaveChangesAsync(true);
 
-        var transactionDto = _fixture.Build<TransactionDto>()
+        var command = _fixture.Build<UpdateTransactionCommand>()
             .With(x => x.Id, transaction.Id)
             .With(x => x.AccountId, transaction.FinancialAccountId)
             .With(x => x.CategoryId, transaction.TransactionCategoryId)
@@ -38,24 +38,23 @@ public class UpdateTransactionTests(IntegrationTestFactory factory) : IClassFixt
             .Create();
 
         // Act
-        var command = new UpdateTransactionCommand(transactionDto);
-        var response = await _client.PutAsJsonAsync($"/api/transactions/{command.Dto.Id}", command);
+        var response = await _client.PutAsJsonAsync($"/api/transactions/{command.Id}", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var updatedTransaction = await _context.Transactions.FindAsync(command.Dto.Id);
+        var updatedTransaction = await _context.Transactions.FindAsync(command.Id);
         updatedTransaction.Should().NotBeNull();
         await _context.Entry(updatedTransaction!).ReloadAsync();
 
         // Trim the dto date to microseconds to match SQL date precision
-        var trimmedDate = transactionDto.Date.Trim(TimeSpan.TicksPerMicrosecond);
+        var trimmedDate = command.Date.Trim(TimeSpan.TicksPerMicrosecond);
 
         updatedTransaction!.Date.Should().Be(trimmedDate);
-        updatedTransaction.Description.Should().Be(transactionDto.Description);
-        updatedTransaction.Inflow.Should().Be(transactionDto.Inflow);
-        updatedTransaction.Outflow.Should().Be(transactionDto.Outflow);
-        updatedTransaction.Cleared.Should().Be(transactionDto.Cleared);
+        updatedTransaction.Description.Should().Be(command.Description);
+        updatedTransaction.Inflow.Should().Be(command.Inflow);
+        updatedTransaction.Outflow.Should().Be(command.Outflow);
+        updatedTransaction.Cleared.Should().Be(command.Cleared);
     }
 
     [Theory]
@@ -74,7 +73,7 @@ public class UpdateTransactionTests(IntegrationTestFactory factory) : IClassFixt
         await _context.Transactions.AddAsync(transaction);
         await _context.SaveChangesAsync(true);
 
-        var dto = _fixture.Build<TransactionDto>()
+        var command = _fixture.Build<UpdateTransactionCommand>()
             .With(x => x.Id, transaction.Id)
             .With(x => x.AccountId, accountId)
             .With(x => x.CategoryId, categoryId)
@@ -82,7 +81,6 @@ public class UpdateTransactionTests(IntegrationTestFactory factory) : IClassFixt
             .With(x => x.Date, date)
             .With(x => x.Description, desc)
             .Create();
-        var command = new UpdateTransactionCommand(dto);
 
         // Act
         var response = await _client.PutAsJsonAsync($"/api/transactions/{transaction.Id}", command);
@@ -96,16 +94,16 @@ public class UpdateTransactionTests(IntegrationTestFactory factory) : IClassFixt
     {
         // Arrange
         const int id = 100;
-        var dto = _fixture.Build<TransactionDto>()
+        var command = _fixture.Build<UpdateTransactionCommand>()
             .With(x => x.Id, id)
             .With(x => x.AccountId, DefaultTestValues.Id)
             .With(x => x.CategoryId, DefaultTestValues.Id)
             .With(x => x.VendorId, DefaultTestValues.Id)
             .Create();
-        
+
         // Act
-        var response = await _client.PutAsJsonAsync($"/api/transactions/{id}", new UpdateTransactionCommand(dto));
-        
+        var response = await _client.PutAsJsonAsync($"/api/transactions/{id}", command);
+
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

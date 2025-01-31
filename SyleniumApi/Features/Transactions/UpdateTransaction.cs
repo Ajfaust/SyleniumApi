@@ -7,27 +7,43 @@ using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Transactions;
 
-public record UpdateTransactionCommand(TransactionDto Dto);
+public record UpdateTransactionCommand(
+    int Id,
+    int AccountId,
+    int CategoryId,
+    int VendorId,
+    DateTime Date,
+    string Description,
+    decimal Inflow,
+    decimal Outflow,
+    bool Cleared);
 
-public record UpdateTransactionResponse(TransactionDto Dto);
+public record UpdateTransactionResponse(
+    int Id,
+    int AccountId,
+    int CategoryId,
+    int VendorId,
+    DateTime Date,
+    string Description,
+    decimal Inflow,
+    decimal Outflow,
+    bool Cleared);
 
 public class UpdateTransactionMapper : Mapper<UpdateTransactionCommand, UpdateTransactionResponse, Transaction>
 {
     public override Task<UpdateTransactionResponse> FromEntityAsync(Transaction e, CancellationToken ct = default)
     {
-        var dto = new TransactionDto
-        {
-            Id = e.Id,
-            AccountId = e.FinancialAccountId,
-            CategoryId = e.TransactionCategoryId,
-            Date = e.Date,
-            Description = e.Description ?? string.Empty,
-            Inflow = e.Inflow,
-            Outflow = e.Outflow,
-            Cleared = e.Cleared
-        };
-
-        return Task.FromResult(new UpdateTransactionResponse(dto));
+        return Task.FromResult(new UpdateTransactionResponse(
+            e.Id,
+            e.FinancialAccountId,
+            e.TransactionCategoryId,
+            e.VendorId,
+            e.Date,
+            e.Description ?? string.Empty,
+            e.Inflow,
+            e.Outflow,
+            e.Cleared
+        ));
     }
 }
 
@@ -35,8 +51,8 @@ public class UpdateTransactionValidator : Validator<UpdateTransactionCommand>
 {
     public UpdateTransactionValidator()
     {
-        RuleFor(x => x.Dto.Date).LessThanOrEqualTo(DateTime.UtcNow);
-        RuleFor(x => x.Dto.Description).MaximumLength(500);
+        RuleFor(x => x.Date).LessThanOrEqualTo(DateTime.UtcNow);
+        RuleFor(x => x.Description).MaximumLength(500);
     }
 }
 
@@ -53,19 +69,17 @@ public class UpdateTransactionEndpoint(SyleniumDbContext context, ILogger logger
     public override void OnBeforeValidate(UpdateTransactionCommand cmd)
     {
         // Add validation checks for the appropriate FKs existing
-        var accountExists =
-            context.FinancialAccounts.Any(a => a.Id == cmd.Dto.AccountId);
+        var accountExists = context.FinancialAccounts.Any(a => a.Id == cmd.AccountId);
         if (!accountExists)
-            AddError($"AccountId {cmd.Dto.AccountId} does not exist");
+            AddError($"AccountId {cmd.AccountId} does not exist");
 
-        var categoryExists =
-            context.TransactionCategories.Any(c => c.Id == cmd.Dto.CategoryId);
+        var categoryExists = context.TransactionCategories.Any(c => c.Id == cmd.CategoryId);
         if (!categoryExists)
-            AddError($"CategoryId {cmd.Dto.CategoryId} does not exist");
+            AddError($"CategoryId {cmd.CategoryId} does not exist");
 
-        var vendorExists = context.Vendors.Any(v => v.Id == cmd.Dto.VendorId);
+        var vendorExists = context.Vendors.Any(v => v.Id == cmd.VendorId);
         if (!vendorExists)
-            AddError($"VendorId {cmd.Dto.VendorId} does not exist");
+            AddError($"VendorId {cmd.VendorId} does not exist");
     }
 
     public override void OnValidationFailed()
@@ -75,22 +89,22 @@ public class UpdateTransactionEndpoint(SyleniumDbContext context, ILogger logger
 
     public override async Task HandleAsync(UpdateTransactionCommand cmd, CancellationToken ct)
     {
-        var transaction = await context.Transactions.FindAsync(cmd.Dto.Id, ct);
+        var transaction = await context.Transactions.FindAsync(cmd.Id, ct);
         if (transaction is null)
         {
-            logger.Error("Transaction with id {0} not found", cmd.Dto.Id);
+            logger.Error("Transaction with id {0} not found", cmd.Id);
             await SendNotFoundAsync(ct);
             return;
         }
 
-        transaction.FinancialAccountId = cmd.Dto.AccountId;
-        transaction.TransactionCategoryId = cmd.Dto.CategoryId;
-        transaction.VendorId = cmd.Dto.VendorId;
-        transaction.Date = cmd.Dto.Date;
-        transaction.Description = cmd.Dto.Description;
-        transaction.Inflow = cmd.Dto.Inflow;
-        transaction.Outflow = cmd.Dto.Outflow;
-        transaction.Cleared = cmd.Dto.Cleared;
+        transaction.FinancialAccountId = cmd.AccountId;
+        transaction.TransactionCategoryId = cmd.CategoryId;
+        transaction.VendorId = cmd.VendorId;
+        transaction.Date = cmd.Date;
+        transaction.Description = cmd.Description;
+        transaction.Inflow = cmd.Inflow;
+        transaction.Outflow = cmd.Outflow;
+        transaction.Cleared = cmd.Cleared;
 
         context.Transactions.Update(transaction);
         await context.SaveChangesAsync(ct);

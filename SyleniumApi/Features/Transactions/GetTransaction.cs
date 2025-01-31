@@ -7,25 +7,33 @@ namespace SyleniumApi.Features.Transactions;
 
 public record GetTransactionRequest(int Id);
 
-public record GetTransactionResponse(TransactionDto Dto);
+public record GetTransactionResponse(
+    int Id,
+    int AccountId,
+    int CategoryId,
+    int VendorId,
+    DateTime Date,
+    string Description,
+    decimal Inflow,
+    decimal Outflow,
+    bool Cleared
+);
 
 public class GetTransactionMapper : Mapper<GetTransactionRequest, GetTransactionResponse, Transaction>
 {
     public override Task<GetTransactionResponse> FromEntityAsync(Transaction e, CancellationToken ct = default)
     {
-        var dto = new TransactionDto
-        {
-            Id = e.Id,
-            AccountId = e.FinancialAccountId,
-            CategoryId = e.TransactionCategoryId,
-            VendorId = e.VendorId,
-            Description = e.Description ?? string.Empty,
-            Date = e.Date,
-            Inflow = e.Inflow,
-            Outflow = e.Outflow,
-            Cleared = e.Cleared
-        };
-        return Task.FromResult(new GetTransactionResponse(dto));
+        return Task.FromResult(new GetTransactionResponse(
+            e.Id,
+            e.FinancialAccountId,
+            e.TransactionCategoryId,
+            e.VendorId,
+            e.Date,
+            e.Description ?? string.Empty,
+            e.Inflow,
+            e.Outflow,
+            e.Cleared
+        ));
     }
 }
 

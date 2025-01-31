@@ -7,43 +7,57 @@ using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Transactions;
 
-public record CreateTransactionCommand(TransactionDto Dto);
+public record CreateTransactionCommand(
+    int AccountId,
+    int CategoryId,
+    int VendorId,
+    DateTime Date,
+    string Description,
+    decimal Inflow,
+    decimal Outflow,
+    bool Cleared);
 
-public record CreateTransactionResponse(TransactionDto Dto);
+public record CreateTransactionResponse(
+    int Id,
+    int AccountId,
+    int CategoryId,
+    int VendorId,
+    DateTime Date,
+    string Description,
+    decimal Inflow,
+    decimal Outflow,
+    bool Cleared);
 
 public class CreateTransactionMapper : Mapper<CreateTransactionCommand, CreateTransactionResponse, Transaction>
 {
     public override Task<Transaction> ToEntityAsync(CreateTransactionCommand cmd, CancellationToken ct = default)
     {
-        var dto = cmd.Dto;
         return Task.FromResult(new Transaction
         {
-            FinancialAccountId = dto.AccountId,
-            TransactionCategoryId = dto.CategoryId,
-            VendorId = dto.VendorId,
-            Date = dto.Date,
-            Description = dto.Description,
-            Inflow = dto.Inflow,
-            Outflow = dto.Outflow,
-            Cleared = dto.Cleared
+            FinancialAccountId = cmd.AccountId,
+            TransactionCategoryId = cmd.CategoryId,
+            VendorId = cmd.VendorId,
+            Date = cmd.Date,
+            Description = cmd.Description,
+            Inflow = cmd.Inflow,
+            Outflow = cmd.Outflow,
+            Cleared = cmd.Cleared
         });
     }
 
     public override Task<CreateTransactionResponse> FromEntityAsync(Transaction e, CancellationToken ct = default)
     {
-        var dto = new TransactionDto
-        {
-            Id = e.Id,
-            AccountId = e.FinancialAccountId,
-            CategoryId = e.TransactionCategoryId,
-            Date = e.Date,
-            Description = e.Description ?? string.Empty,
-            Inflow = e.Inflow,
-            Outflow = e.Outflow,
-            Cleared = e.Cleared
-        };
-
-        return Task.FromResult(new CreateTransactionResponse(dto));
+        return Task.FromResult(new CreateTransactionResponse(
+            e.Id,
+            e.FinancialAccountId,
+            e.TransactionCategoryId,
+            e.VendorId,
+            e.Date,
+            e.Description ?? string.Empty,
+            e.Inflow,
+            e.Outflow,
+            e.Cleared
+        ));
     }
 }
 
@@ -51,8 +65,8 @@ public class CreateTransactionValidator : Validator<CreateTransactionCommand>
 {
     public CreateTransactionValidator()
     {
-        RuleFor(x => x.Dto.Date).LessThanOrEqualTo(DateTime.UtcNow);
-        RuleFor(x => x.Dto.Description).MaximumLength(500);
+        RuleFor(x => x.Date).LessThanOrEqualTo(DateTime.UtcNow);
+        RuleFor(x => x.Description).MaximumLength(500);
     }
 }
 
@@ -69,18 +83,18 @@ public class CreateTransactionEndpoint(SyleniumDbContext context, ILogger logger
     {
         // Add validation checks for the appropriate FKs existing
         var accountExists =
-            context.FinancialAccounts.Any(a => a.Id == cmd.Dto.AccountId);
+            context.FinancialAccounts.Any(a => a.Id == cmd.AccountId);
         if (!accountExists)
-            AddError($"AccountId {cmd.Dto.AccountId} does not exist");
+            AddError($"AccountId {cmd.AccountId} does not exist");
 
         var categoryExists =
-            context.TransactionCategories.Any(c => c.Id == cmd.Dto.CategoryId);
+            context.TransactionCategories.Any(c => c.Id == cmd.CategoryId);
         if (!categoryExists)
-            AddError($"CategoryId {cmd.Dto.CategoryId} does not exist");
+            AddError($"CategoryId {cmd.CategoryId} does not exist");
 
-        var vendorExists = context.Vendors.Any(v => v.Id == cmd.Dto.VendorId);
+        var vendorExists = context.Vendors.Any(v => v.Id == cmd.VendorId);
         if (!vendorExists)
-            AddError($"VendorId {cmd.Dto.VendorId} does not exist");
+            AddError($"VendorId {cmd.VendorId} does not exist");
     }
 
     public override void OnValidationFailed()

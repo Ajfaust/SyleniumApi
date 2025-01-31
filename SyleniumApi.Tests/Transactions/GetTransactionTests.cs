@@ -32,7 +32,7 @@ public class GetTransactionTests(IntegrationTestFactory factory) : IClassFixture
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        var id = JsonConvert.DeserializeObject<GetTransactionResponse>(content)?.Dto.Id;
+        var id = JsonConvert.DeserializeObject<GetTransactionResponse>(content)?.Id;
         id.Should().NotBeNull();
         id!.Should().Be(transaction.Id);
     }
