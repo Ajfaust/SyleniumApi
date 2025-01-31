@@ -1,8 +1,9 @@
 using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
 using SyleniumApi.DbContexts;
 using ILogger = Serilog.ILogger;
 
-namespace SyleniumApi.Features.Ledgers;
+namespace SyleniumApi.Features.Ledgers.Get;
 
 public record GetLedgerRequest(int Id);
 
@@ -20,7 +21,10 @@ public class GetLedgerEndpoint(SyleniumDbContext context, ILogger logger)
 
     public override async Task HandleAsync(GetLedgerRequest req, CancellationToken ct)
     {
-        var ledger = await context.Ledgers.FindAsync(req.Id);
+        var ledger = await context.Ledgers
+            .Include(l => l.FinancialAccounts)
+            .SingleOrDefaultAsync(l => l.Id == req.Id, ct);
+
         if (ledger is null)
         {
             logger.Error("Ledger {id} not found.", req.Id);

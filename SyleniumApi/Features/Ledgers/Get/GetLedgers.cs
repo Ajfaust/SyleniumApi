@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SyleniumApi.DbContexts;
 using ILogger = Serilog.ILogger;
 
-namespace SyleniumApi.Features.Ledgers;
+namespace SyleniumApi.Features.Ledgers.Get;
 
 public class GetLedgersEndpoint(SyleniumDbContext context, ILogger logger)
     : EndpointWithoutRequest<List<GetLedgerResponse>>

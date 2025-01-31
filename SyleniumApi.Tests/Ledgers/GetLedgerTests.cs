@@ -3,7 +3,7 @@ using AutoFixture;
 using FluentAssertions;
 using Newtonsoft.Json;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Features.Ledgers;
+using SyleniumApi.Features.Ledgers.Get;
 
 namespace SyleniumApi.Tests.Ledgers;
 

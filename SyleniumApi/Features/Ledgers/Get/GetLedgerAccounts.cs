@@ -3,9 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using SyleniumApi.DbContexts;
 using SyleniumApi.Features.FinancialAccountCategories;
 using SyleniumApi.Features.FinancialAccounts;
+using SyleniumApi.Features.Transactions;
 using ILogger = Serilog.ILogger;
 
-namespace SyleniumApi.Features.Ledgers;
+namespace SyleniumApi.Features.Ledgers.Get;
 
 public record GetLedgerAccountsRequest(int Id);
 
@@ -39,9 +40,10 @@ public class GetLedgerAccountsEndpoint(SyleniumDbContext context, ILogger logger
             .Include(fa => fa.FinancialAccountCategory)
             .Select(fa => new GetFinancialAccountResponse(
                 fa.Id,
+                fa.Name,
                 new GetFaCategoryResponse(fa.FinancialAccountCategory!.Id, fa.FinancialAccountCategory.Name,
                     fa.FinancialAccountCategory.Type),
-                fa.Name))
+                new List<GetTransactionResponse>()))
             .ToList();
 
         await SendAsync(new GetLedgerAccountsResponse(accounts), cancellation: ct);
