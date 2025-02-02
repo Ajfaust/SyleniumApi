@@ -1,16 +1,16 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace SyleniumApi.Data.Entities;
 
-[Table("FinancialAccount")]
+[EntityTypeConfiguration(typeof(FinancialAccountConfiguration))]
 public class FinancialAccount
 {
-    [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    [Required]
     [MaxLength(200)]
     public required string Name { get; set; }
 
@@ -22,7 +22,6 @@ public class FinancialAccount
 
     #region Ledger Relation
 
-    [Required]
     public int LedgerId { get; set; }
 
     public virtual Ledger? Ledger { get; set; }
@@ -31,10 +30,31 @@ public class FinancialAccount
 
     #region Financial Account Category Relation
 
-    [Required]
     public int FinancialAccountCategoryId { get; set; }
 
     public virtual FinancialAccountCategory? FinancialAccountCategory { get; set; }
 
     #endregion
+}
+
+public class FinancialAccountConfiguration : IEntityTypeConfiguration<FinancialAccount>
+{
+    public void Configure(EntityTypeBuilder<FinancialAccount> builder)
+    {
+        builder.ToTable("FinancialAccounts")
+            .HasKey(e => e.Id);
+
+        builder.Property(e => e.Name).IsRequired();
+
+        builder.HasOne(e => e.Ledger)
+            .WithMany(l => l.FinancialAccounts)
+            .HasForeignKey(e => e.LedgerId)
+            .IsRequired()
+            .HasPrincipalKey(l => l.Id);
+        builder.HasOne(e => e.FinancialAccountCategory)
+            .WithMany(fac => fac.FinancialAccounts)
+            .HasForeignKey(fa => fa.FinancialAccountCategoryId)
+            .IsRequired()
+            .HasPrincipalKey(fac => fac.Id);
+    }
 }

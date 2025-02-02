@@ -1,14 +1,23 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace SyleniumApi.Data.Entities;
 
-[Table("ActiveLedger")]
+[EntityTypeConfiguration(typeof(ActiveLedgerConfiguration))]
 public class ActiveLedger
 {
-    [Key]
     public int LedgerId { get; set; }
 
-    [ForeignKey("LedgerId")]
     public Ledger? Ledger { get; set; }
+}
+
+public class ActiveLedgerConfiguration : IEntityTypeConfiguration<ActiveLedger>
+{
+    public void Configure(EntityTypeBuilder<ActiveLedger> builder)
+    {
+        builder.ToTable("ActiveLedger").HasKey(e => e.LedgerId);
+
+        builder.HasOne<Ledger>(e => e.Ledger)
+            .WithOne();
+    }
 }

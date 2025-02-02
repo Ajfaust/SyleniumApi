@@ -1,16 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace SyleniumApi.Data.Entities;
 
-[Table("Ledger")]
+[EntityTypeConfiguration(typeof(LedgerConfiguration))]
 public class Ledger
 {
-    [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    [Required]
     [MaxLength(200)]
     public required string Name { get; set; }
 
@@ -35,4 +35,21 @@ public class Ledger
     public virtual ICollection<FinancialAccount> FinancialAccounts { get; set; } = new List<FinancialAccount>();
 
     #endregion
+
+    #region Vendor Relation
+
+    public virtual ICollection<Vendor> Vendors { get; set; } = new List<Vendor>();
+
+    #endregion
+}
+
+public class LedgerConfiguration : IEntityTypeConfiguration<Ledger>
+{
+    public void Configure(EntityTypeBuilder<Ledger> builder)
+    {
+        builder.ToTable("Ledger");
+
+        builder.HasKey(l => l.Id);
+        builder.HasIndex(l => l.Id);
+    }
 }

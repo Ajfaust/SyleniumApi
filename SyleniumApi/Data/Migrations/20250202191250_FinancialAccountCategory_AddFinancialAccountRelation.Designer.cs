@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SyleniumApi.DbContexts;
@@ -11,9 +12,11 @@ using SyleniumApi.DbContexts;
 namespace SyleniumApi.Data.Migrations
 {
     [DbContext(typeof(SyleniumDbContext))]
-    partial class SyleniumDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250202191250_FinancialAccountCategory_AddFinancialAccountRelation")]
+    partial class FinancialAccountCategory_AddFinancialAccountRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,11 +147,13 @@ namespace SyleniumApi.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FinancialAccountId");
+
                     b.HasIndex("TransactionCategoryId");
 
                     b.HasIndex("VendorId");
 
-                    b.ToTable("Transactions", (string)null);
+                    b.ToTable("Transaction");
                 });
 
             modelBuilder.Entity("SyleniumApi.Data.Entities.TransactionCategory", b =>
@@ -179,7 +184,7 @@ namespace SyleniumApi.Data.Migrations
                     b.HasIndex("Name", "ParentCategoryId")
                         .IsUnique();
 
-                    b.ToTable("TransactionCategories", (string)null);
+                    b.ToTable("TransactionCategory");
                 });
 
             modelBuilder.Entity("SyleniumApi.Data.Entities.Vendor", b =>
@@ -202,7 +207,7 @@ namespace SyleniumApi.Data.Migrations
 
                     b.HasIndex("LedgerId");
 
-                    b.ToTable("Vendors", (string)null);
+                    b.ToTable("Vendor");
                 });
 
             modelBuilder.Entity("SyleniumApi.Data.Entities.ActiveLedger", b =>
@@ -250,7 +255,7 @@ namespace SyleniumApi.Data.Migrations
                 {
                     b.HasOne("SyleniumApi.Data.Entities.FinancialAccount", "FinancialAccount")
                         .WithMany("Transactions")
-                        .HasForeignKey("TransactionCategoryId")
+                        .HasForeignKey("FinancialAccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

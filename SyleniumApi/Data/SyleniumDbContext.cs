@@ -42,23 +42,4 @@ public class SyleniumDbContext(DbContextOptions options) : DbContext(options)
     ///     DB Set for Transactions
     /// </summary>
     public DbSet<Transaction> Transactions { get; set; }
-
-    /// <summary>
-    ///     Directives to use when model is being created
-    /// </summary>
-    /// <param name="modelBuilder"></param>
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.UseIdentityColumns();
-
-        modelBuilder.Entity<TransactionCategory>()
-            .HasMany(e => e.SubCategories)
-            .WithOne(e => e.ParentCategory)
-            .HasForeignKey(e => e.ParentCategoryId);
-
-        modelBuilder.Entity<TransactionCategory>()
-            .HasIndex(e => new { e.Name, e.ParentCategoryId }).IsUnique();
-
-        base.OnModelCreating(modelBuilder);
-    }
 }

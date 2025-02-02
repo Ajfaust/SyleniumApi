@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SyleniumApi.DbContexts;
@@ -11,9 +12,11 @@ using SyleniumApi.DbContexts;
 namespace SyleniumApi.Data.Migrations
 {
     [DbContext(typeof(SyleniumDbContext))]
-    partial class SyleniumDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250202050656_Ledger_ToFluentApi")]
+    partial class Ledger_ToFluentApi
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,7 +60,7 @@ namespace SyleniumApi.Data.Migrations
 
                     b.HasIndex("LedgerId");
 
-                    b.ToTable("FinancialAccounts", (string)null);
+                    b.ToTable("FinancialAccount");
                 });
 
             modelBuilder.Entity("SyleniumApi.Data.Entities.FinancialAccountCategory", b =>
@@ -83,7 +86,7 @@ namespace SyleniumApi.Data.Migrations
 
                     b.HasIndex("LedgerId");
 
-                    b.ToTable("FinancialAccountCategories", (string)null);
+                    b.ToTable("FinancialAccountCategory");
                 });
 
             modelBuilder.Entity("SyleniumApi.Data.Entities.Ledger", b =>
@@ -144,11 +147,13 @@ namespace SyleniumApi.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FinancialAccountId");
+
                     b.HasIndex("TransactionCategoryId");
 
                     b.HasIndex("VendorId");
 
-                    b.ToTable("Transactions", (string)null);
+                    b.ToTable("Transaction");
                 });
 
             modelBuilder.Entity("SyleniumApi.Data.Entities.TransactionCategory", b =>
@@ -179,7 +184,7 @@ namespace SyleniumApi.Data.Migrations
                     b.HasIndex("Name", "ParentCategoryId")
                         .IsUnique();
 
-                    b.ToTable("TransactionCategories", (string)null);
+                    b.ToTable("TransactionCategory");
                 });
 
             modelBuilder.Entity("SyleniumApi.Data.Entities.Vendor", b =>
@@ -202,7 +207,7 @@ namespace SyleniumApi.Data.Migrations
 
                     b.HasIndex("LedgerId");
 
-                    b.ToTable("Vendors", (string)null);
+                    b.ToTable("Vendor");
                 });
 
             modelBuilder.Entity("SyleniumApi.Data.Entities.ActiveLedger", b =>
@@ -219,7 +224,7 @@ namespace SyleniumApi.Data.Migrations
             modelBuilder.Entity("SyleniumApi.Data.Entities.FinancialAccount", b =>
                 {
                     b.HasOne("SyleniumApi.Data.Entities.FinancialAccountCategory", "FinancialAccountCategory")
-                        .WithMany("FinancialAccounts")
+                        .WithMany()
                         .HasForeignKey("FinancialAccountCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -250,7 +255,7 @@ namespace SyleniumApi.Data.Migrations
                 {
                     b.HasOne("SyleniumApi.Data.Entities.FinancialAccount", "FinancialAccount")
                         .WithMany("Transactions")
-                        .HasForeignKey("TransactionCategoryId")
+                        .HasForeignKey("FinancialAccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -304,11 +309,6 @@ namespace SyleniumApi.Data.Migrations
             modelBuilder.Entity("SyleniumApi.Data.Entities.FinancialAccount", b =>
                 {
                     b.Navigation("Transactions");
-                });
-
-            modelBuilder.Entity("SyleniumApi.Data.Entities.FinancialAccountCategory", b =>
-                {
-                    b.Navigation("FinancialAccounts");
                 });
 
             modelBuilder.Entity("SyleniumApi.Data.Entities.Ledger", b =>
