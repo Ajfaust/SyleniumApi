@@ -16,12 +16,17 @@ public class Ledger
 
     public DateTime CreatedDate { get; set; }
 
-    public bool IsActive { get; set; }
-
     #region Financial Account Category Relation
 
     public virtual ICollection<FinancialAccountCategory> FinancialAccountCategories { get; set; } =
         new List<FinancialAccountCategory>();
+
+    #endregion
+
+    #region Transaction Category Relation
+
+    public virtual ICollection<TransactionCategory> TransactionCategories { get; set; } =
+        new List<TransactionCategory>();
 
     #endregion
 

@@ -14,6 +14,11 @@ public class SyleniumDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Ledger> Ledgers { get; set; }
 
     /// <summary>
+    ///     DB Set for Active Ledger
+    /// </summary>
+    public DbSet<ActiveLedger> ActiveLedger { get; set; }
+
+    /// <summary>
     ///     DB Set for Financial Categories
     /// </summary>
     public DbSet<FinancialAccountCategory> FinancialAccountCategories { get; set; }
@@ -52,7 +57,7 @@ public class SyleniumDbContext(DbContextOptions options) : DbContext(options)
             .HasForeignKey(e => e.ParentCategoryId);
 
         modelBuilder.Entity<TransactionCategory>()
-            .HasIndex(e => new { Name = e.Name, e.ParentCategoryId }).IsUnique();
+            .HasIndex(e => new { e.Name, e.ParentCategoryId }).IsUnique();
 
         base.OnModelCreating(modelBuilder);
     }
