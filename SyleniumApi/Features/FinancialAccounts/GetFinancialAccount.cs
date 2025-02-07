@@ -1,5 +1,6 @@
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
+using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
 using SyleniumApi.Features.FinancialAccountCategories;
 using SyleniumApi.Features.Transactions;
@@ -16,7 +17,7 @@ public record GetFinancialAccountResponse(
     List<GetTransactionResponse>? Transactions);
 
 public class GetFinancialAccountEndpoint(SyleniumDbContext context, ILogger logger)
-    : Endpoint<GetFinancialAccountQuery, GetFinancialAccountResponse, GetTransactionMapper>
+    : Endpoint<GetFinancialAccountQuery, GetFinancialAccountResponse>
 {
     public override void Configure()
     {
@@ -31,6 +32,9 @@ public class GetFinancialAccountEndpoint(SyleniumDbContext context, ILogger logg
             .FinancialAccounts
             .Include(fa => fa.FinancialAccountCategory)
             .Include(fa => fa.Transactions)
+            .ThenInclude(t => t.TransactionCategory)
+            .Include(fa => fa.Transactions)
+            .ThenInclude(t => t.Vendor)
             .SingleOrDefaultAsync(fa => fa.Id == req.Id, ct);
         if (fa is null)
         {
@@ -39,24 +43,28 @@ public class GetFinancialAccountEndpoint(SyleniumDbContext context, ILogger logg
             return;
         }
 
-        var categoryResponse =
-            new GetFaCategoryResponse(fa.FinancialAccountCategoryId, fa.FinancialAccountCategory!.Name,
-                fa.FinancialAccountCategory!.Type);
-        var transactions = fa.Transactions
-            .Select(t => new GetTransactionResponse(
-                t.Id,
-                Date: t.Date,
-                AccountName: t.FinancialAccount?.Name ?? string.Empty,
-                CategoryName: t.TransactionCategory?.Name ?? string.Empty,
-                VendorName: t.Vendor?.Name ?? string.Empty,
-                Description: t.Description ?? string.Empty,
-                Inflow: t.Inflow,
-                Outflow: t.Outflow,
-                Cleared: t.Cleared
-            ))
-            .ToList();
+        try
+        {
+            await SendAsync(fa.ToGetResponse(), cancellation: ct);
+        }
+        catch (NullReferenceException ex)
+        {
+            logger.Error(ex.Message);
+            AddError("Unexpected error creating response object.");
+            await SendErrorsAsync(StatusCodes.Status500InternalServerError, ct);
+        }
+    }
+}
 
-        var response = new GetFinancialAccountResponse(fa.Id, fa.Name, categoryResponse, transactions);
-        await SendAsync(response);
+public static class AccountMappers
+{
+    public static GetFinancialAccountResponse ToGetResponse(this FinancialAccount account)
+    {
+        if (account.FinancialAccountCategory == null)
+            throw new NullReferenceException("Financial Account Category cannot be null");
+
+        return new GetFinancialAccountResponse(account.Id, account.Name,
+            account.FinancialAccountCategory.ToGetResponse(),
+            account.Transactions.Select(t => t.ToGetResponse()).ToList());
     }
 }

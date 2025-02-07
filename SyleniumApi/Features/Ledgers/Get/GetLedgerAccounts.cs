@@ -1,9 +1,7 @@
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 using SyleniumApi.DbContexts;
-using SyleniumApi.Features.FinancialAccountCategories;
 using SyleniumApi.Features.FinancialAccounts;
-using SyleniumApi.Features.Transactions;
 using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Ledgers.Get;
@@ -35,18 +33,22 @@ public class GetLedgerAccountsEndpoint(SyleniumDbContext context, ILogger logger
             return;
         }
 
-        var accounts = context
-            .FinancialAccounts
-            .Where(fa => fa.LedgerId == req.Id)
-            .Include(fa => fa.FinancialAccountCategory)
-            .Select(fa => new GetFinancialAccountResponse(
-                fa.Id,
-                fa.Name,
-                new GetFaCategoryResponse(fa.FinancialAccountCategory!.Id, fa.FinancialAccountCategory.Name,
-                    fa.FinancialAccountCategory.Type),
-                new List<GetTransactionResponse>()))
-            .ToList();
+        try
+        {
+            var accounts = context
+                .FinancialAccounts
+                .Where(fa => fa.LedgerId == req.Id)
+                .Include(fa => fa.FinancialAccountCategory)
+                .Select(fa => fa.ToGetResponse())
+                .ToList();
 
-        await SendAsync(new GetLedgerAccountsResponse(accounts), cancellation: ct);
+            await SendAsync(new GetLedgerAccountsResponse(accounts), cancellation: ct);
+        }
+        catch (NullReferenceException ex)
+        {
+            logger.Error(ex.Message);
+            AddError("Unexpected error building response object");
+            await SendErrorsAsync(StatusCodes.Status500InternalServerError, ct);
+        }
     }
 }

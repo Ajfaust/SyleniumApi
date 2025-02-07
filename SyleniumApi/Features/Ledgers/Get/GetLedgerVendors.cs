@@ -33,7 +33,7 @@ public class GetLedgerVendorsEndpoint(SyleniumDbContext context, ILogger logger)
 
         var vendors = context.Vendors
             .Where(v => v.LedgerId == req.Id)
-            .Select(v => new GetVendorResponse(v.Id, v.Name))
+            .Select(v => v.ToGetResponse())
             .ToList();
 
         await SendAsync(new GetLedgerVendorsResponse(vendors), cancellation: ct);

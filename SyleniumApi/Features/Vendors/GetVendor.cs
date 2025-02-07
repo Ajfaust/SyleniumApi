@@ -1,4 +1,5 @@
 using FastEndpoints;
+using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
 using ILogger = Serilog.ILogger;
 
@@ -27,7 +28,14 @@ public class GetVendorEndpoint(SyleniumDbContext context, ILogger logger) : Endp
             return;
         }
 
-        var response = new GetVendorResponse(vendor.Id, vendor.Name);
-        await SendAsync(response, cancellation: ct);
+        await SendAsync(vendor.ToGetResponse(), cancellation: ct);
+    }
+}
+
+public static class VendorMappers
+{
+    public static GetVendorResponse ToGetResponse(this Vendor vendor)
+    {
+        return new GetVendorResponse(vendor.Id, vendor.Name);
     }
 }

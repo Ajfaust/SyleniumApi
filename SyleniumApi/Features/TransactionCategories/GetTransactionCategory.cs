@@ -1,5 +1,6 @@
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
+using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
 using ILogger = Serilog.ILogger;
 
@@ -35,10 +36,15 @@ public class GetTransactionCategoryEndpoint(SyleniumDbContext context, ILogger l
             return;
         }
 
-        var response = new GetTransactionCategoryResponse(category.Id, category.ParentCategoryId,
-            category.Name,
-            category.SubCategories
-                .Select(sc => new GetTransactionCategoryResponse(sc.Id, sc.ParentCategoryId, sc.Name, [])).ToList());
-        await SendOkAsync(response, ct);
+        await SendOkAsync(category.ToGetResponse(), ct);
+    }
+}
+
+public static class TransactionCategoryMappers
+{
+    public static GetTransactionCategoryResponse ToGetResponse(this TransactionCategory category)
+    {
+        return new GetTransactionCategoryResponse(category.Id, category.ParentCategoryId, category.Name,
+            category.SubCategories.Select(c => c.ToGetResponse()).ToList());
     }
 }

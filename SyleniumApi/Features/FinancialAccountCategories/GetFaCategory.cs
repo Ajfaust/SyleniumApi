@@ -9,18 +9,8 @@ public record GetFaCategoryRequest(int Id);
 
 public record GetFaCategoryResponse(int Id, string Name, FinancialCategoryType Type);
 
-public class GetFaCategoryMapper : Mapper<GetFaCategoryRequest, GetFaCategoryResponse, FinancialAccountCategory>
-{
-    public override Task<GetFaCategoryResponse> FromEntityAsync(FinancialAccountCategory cat,
-        CancellationToken ct = default)
-    {
-        return Task.FromResult(new GetFaCategoryResponse(
-            cat.Id, cat.Name, cat.Type));
-    }
-}
-
 public class GetFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
-    : Endpoint<GetFaCategoryRequest, GetFaCategoryResponse, GetFaCategoryMapper>
+    : Endpoint<GetFaCategoryRequest, GetFaCategoryResponse>
 {
     public override void Configure()
     {
@@ -39,6 +29,14 @@ public class GetFaCategoryEndpoint(SyleniumDbContext context, ILogger logger)
             return;
         }
 
-        await SendMappedAsync(category, ct: ct);
+        await SendAsync(category.ToGetResponse(), cancellation: ct);
+    }
+}
+
+public static class FaCategoryMappers
+{
+    public static GetFaCategoryResponse ToGetResponse(this FinancialAccountCategory fa)
+    {
+        return new GetFaCategoryResponse(fa.Id, fa.Name, fa.Type);
     }
 }

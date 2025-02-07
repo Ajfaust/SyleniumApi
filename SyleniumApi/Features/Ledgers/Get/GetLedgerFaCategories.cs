@@ -35,7 +35,7 @@ public class GetAllFaCategoriesEndpoint(SyleniumDbContext context, ILogger logge
         var response = await context
             .FinancialAccountCategories
             .Where(fa => fa.LedgerId == req.Id)
-            .Select(c => new GetFaCategoryResponse(c.Id, c.Name, c.Type))
+            .Select(c => c.ToGetResponse())
             .ToListAsync(ct);
 
         await SendAsync(new GetLedgerFaCategoriesResponse(response), cancellation: ct);

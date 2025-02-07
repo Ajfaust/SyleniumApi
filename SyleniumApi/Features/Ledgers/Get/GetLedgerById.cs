@@ -1,5 +1,6 @@
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
+using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
 using ILogger = Serilog.ILogger;
 
@@ -35,5 +36,13 @@ public class GetLedgerEndpoint(SyleniumDbContext context, ILogger logger)
             logger.Information("Successfully retrieved ledger {id}", ledger.Id);
             await SendOkAsync(new GetLedgerResponse(ledger.Id, ledger.Name, ledger.IsActive), ct);
         }
+    }
+}
+
+public static class LedgerMappers
+{
+    public static GetLedgerResponse ToGetResponse(this Ledger ledger)
+    {
+        return new GetLedgerResponse(ledger.Id, ledger.Name, ledger.IsActive);
     }
 }

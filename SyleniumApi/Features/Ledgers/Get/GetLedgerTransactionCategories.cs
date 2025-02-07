@@ -33,10 +33,7 @@ public class GetLedgerTransactionCategoriesEndpoint(SyleniumDbContext context, I
 
         var categories = context.TransactionCategories
             .Where(c => c.LedgerId == req.Id && c.ParentCategoryId == null)
-            .Select(c => new GetTransactionCategoryResponse(c.Id, c.ParentCategoryId, c.Name,
-                c.SubCategories.Select(
-                    sc => new GetTransactionCategoryResponse(sc.Id, sc.ParentCategoryId, sc.Name,
-                        new List<GetTransactionCategoryResponse>())).ToList()))
+            .Select(c => c.ToGetResponse())
             .ToList();
 
         await SendAsync(new GetLedgerTransactionCategoriesResponse(categories), cancellation: ct);
