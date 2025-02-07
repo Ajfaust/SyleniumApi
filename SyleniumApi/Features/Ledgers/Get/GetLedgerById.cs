@@ -7,7 +7,7 @@ namespace SyleniumApi.Features.Ledgers.Get;
 
 public record GetLedgerRequest(int Id);
 
-public record GetLedgerResponse(int Id, string Name);
+public record GetLedgerResponse(int Id, string Name, bool IsActive);
 
 public class GetLedgerEndpoint(SyleniumDbContext context, ILogger logger)
     : Endpoint<GetLedgerRequest, GetLedgerResponse>
@@ -33,7 +33,7 @@ public class GetLedgerEndpoint(SyleniumDbContext context, ILogger logger)
         else
         {
             logger.Information("Successfully retrieved ledger {id}", ledger.Id);
-            await SendOkAsync(new GetLedgerResponse(ledger.Id, ledger.Name), ct);
+            await SendOkAsync(new GetLedgerResponse(ledger.Id, ledger.Name, ledger.IsActive), ct);
         }
     }
 }

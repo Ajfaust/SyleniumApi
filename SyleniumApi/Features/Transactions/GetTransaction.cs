@@ -1,4 +1,5 @@
 using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
 using ILogger = Serilog.ILogger;
@@ -9,9 +10,9 @@ public record GetTransactionRequest(int Id);
 
 public record GetTransactionResponse(
     int Id,
-    int AccountId,
-    int CategoryId,
-    int VendorId,
+    string AccountName,
+    string CategoryName,
+    string VendorName,
     DateTime Date,
     string Description,
     decimal Inflow,
@@ -25,9 +26,9 @@ public class GetTransactionMapper : Mapper<GetTransactionRequest, GetTransaction
     {
         return Task.FromResult(new GetTransactionResponse(
             e.Id,
-            e.FinancialAccountId,
-            e.TransactionCategoryId,
-            e.VendorId,
+            e.FinancialAccount?.Name ?? string.Empty,
+            e.TransactionCategory?.Name ?? string.Empty,
+            e.Vendor?.Name ?? string.Empty,
             e.Date,
             e.Description ?? string.Empty,
             e.Inflow,
@@ -49,7 +50,11 @@ public class GetTransactionEndpoint(SyleniumDbContext context, ILogger logger)
 
     public override async Task HandleAsync(GetTransactionRequest req, CancellationToken ct)
     {
-        var transaction = await context.Transactions.FindAsync(req.Id, ct);
+        var transaction = await context
+            .Transactions
+            .Include(t => t.FinancialAccount)
+            .Include(t => t.TransactionCategory)
+            .SingleOrDefaultAsync(t => t.Id == req.Id, ct);
         if (transaction is null)
         {
             logger.Error("Unable to find transaction with id {Id}", req.Id);

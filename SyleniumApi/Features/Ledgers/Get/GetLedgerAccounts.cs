@@ -17,13 +17,14 @@ public class GetLedgerAccountsEndpoint(SyleniumDbContext context, ILogger logger
 {
     public override void Configure()
     {
-        Get("ledgers/{Id:int}/accounts");
+        Get("ledgers/{Id:int}/financial-accounts");
         Description(b => b.Produces(400));
         AllowAnonymous();
     }
 
     public override async Task HandleAsync(GetLedgerAccountsRequest req, CancellationToken ct)
     {
+        logger.Information("Retrieving accounts for ledger {id}", req.Id);
         var ledgerExists = await context.Ledgers.AnyAsync(l => l.Id == req.Id, ct);
         if (!ledgerExists)
         {

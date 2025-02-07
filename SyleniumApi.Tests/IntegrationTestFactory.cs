@@ -71,6 +71,7 @@ public static class ServiceCollectionExtensions
         // Add one of each entity for foreign key constraints
         context.Ledgers.Add(new Ledger
         {
+            Id = DefaultTestValues.Id,
             Name = "Test Ledger",
             CreatedDate = DateTime.UtcNow
         });

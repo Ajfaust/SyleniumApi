@@ -17,28 +17,31 @@ public class UpdateActiveLedgerEndpoint(SyleniumDbContext context, ILogger logge
 
     public override async Task HandleAsync(UpdateActiveLedgerCommand cmd, CancellationToken ct)
     {
-        var ledger = await context.Ledgers.FindAsync(cmd.Id, ct);
-        if (ledger is null)
+        logger.Information("Updating active ledger to {id}", cmd.Id);
+        var activeLedger = await context.Ledgers.SingleOrDefaultAsync(l => l.IsActive, ct);
+        if (activeLedger != null)
         {
-            var message = $"Unable to find ledger {cmd.Id}";
+            logger.Information("Deactivating ledger {id}", activeLedger.Id);
+            activeLedger.IsActive = false;
+            context.Update(activeLedger);
+            await context.SaveChangesAsync(ct);
+        }
+
+        var newActiveLedger = await context.Ledgers.FindAsync(cmd.Id, ct);
+        if (newActiveLedger == null)
+        {
+            var message = $"Unable to find ledger with id {cmd.Id}";
             logger.Error(message);
             AddError(message);
             await SendErrorsAsync(StatusCodes.Status404NotFound, ct);
             return;
         }
 
-        var activeLedger = await context.Ledgers.SingleOrDefaultAsync(l => l.IsActive, ct);
-        if (activeLedger is not null)
-        {
-            activeLedger.IsActive = false;
-            logger.Information($"Deactivated ledger {activeLedger.Id}");
-            context.Ledgers.Update(activeLedger);
-            await context.SaveChangesAsync(ct);
-        }
+        logger.Information("Setting active ledger to {id}", cmd.Id);
+        newActiveLedger.IsActive = true;
 
-        ledger.IsActive = true;
-        logger.Information($"Setting active ledger to {ledger.Id}");
-        context.Ledgers.Update(ledger);
+        context.Update(newActiveLedger);
+
         await context.SaveChangesAsync(ct);
 
         await SendOkAsync(ct);

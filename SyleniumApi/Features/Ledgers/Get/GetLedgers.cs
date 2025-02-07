@@ -17,7 +17,7 @@ public class GetLedgersEndpoint(SyleniumDbContext context, ILogger logger)
     public override async Task HandleAsync(CancellationToken ct)
     {
         var ledgers = await context.Ledgers.ToListAsync(ct);
-        var response = ledgers.Select(l => new GetLedgerResponse(l.Id, l.Name)).ToList();
+        var response = ledgers.Select(l => new GetLedgerResponse(l.Id, l.Name, l.IsActive)).ToList();
         await SendAsync(response);
     }
 }

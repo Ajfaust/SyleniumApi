@@ -14,11 +14,6 @@ public class SyleniumDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Ledger> Ledgers { get; set; }
 
     /// <summary>
-    ///     DB Set for Active Ledger
-    /// </summary>
-    public DbSet<ActiveLedger> ActiveLedger { get; set; }
-
-    /// <summary>
     ///     DB Set for Financial Categories
     /// </summary>
     public DbSet<FinancialAccountCategory> FinancialAccountCategories { get; set; }

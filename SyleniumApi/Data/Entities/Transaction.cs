@@ -59,7 +59,7 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
 
         builder.HasOne<FinancialAccount>(e => e.FinancialAccount)
             .WithMany(fa => fa.Transactions)
-            .HasForeignKey(e => e.TransactionCategoryId)
+            .HasForeignKey(e => e.FinancialAccountId)
             .HasPrincipalKey(fa => fa.Id);
         builder.HasOne<TransactionCategory>(e => e.TransactionCategory)
             .WithMany(tc => tc.Transactions)

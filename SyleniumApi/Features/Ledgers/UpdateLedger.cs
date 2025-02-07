@@ -7,15 +7,15 @@ using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Ledgers;
 
-public record UpdateLedgerCommand(int Id, string Name);
+public record UpdateLedgerCommand(int Id, string Name, bool IsActive);
 
-public record UpdateLedgerResponse(int Id, string Name);
+public record UpdateLedgerResponse(int Id, string Name, bool IsActive);
 
 public class UpdateLedgerMapper : Mapper<UpdateLedgerCommand, UpdateLedgerResponse, Ledger>
 {
     public override Task<UpdateLedgerResponse> FromEntityAsync(Ledger l, CancellationToken ct = default)
     {
-        return Task.FromResult(new UpdateLedgerResponse(l.Id, l.Name));
+        return Task.FromResult(new UpdateLedgerResponse(l.Id, l.Name, l.IsActive));
     }
 }
 
@@ -61,6 +61,7 @@ public class UpdateLedgerEndpoint(SyleniumDbContext context, ILogger logger)
         }
 
         ledger.Name = cmd.Name;
+        ledger.IsActive = cmd.IsActive;
         context.Ledgers.Update(ledger);
         await context.SaveChangesAsync(ct);
 

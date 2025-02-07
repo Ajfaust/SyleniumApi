@@ -46,9 +46,9 @@ public class GetFinancialAccountEndpoint(SyleniumDbContext context, ILogger logg
             .Select(t => new GetTransactionResponse(
                 t.Id,
                 Date: t.Date,
-                AccountId: t.FinancialAccountId,
-                CategoryId: t.TransactionCategoryId,
-                VendorId: t.VendorId,
+                AccountName: t.FinancialAccount?.Name ?? string.Empty,
+                CategoryName: t.TransactionCategory?.Name ?? string.Empty,
+                VendorName: t.Vendor?.Name ?? string.Empty,
                 Description: t.Description ?? string.Empty,
                 Inflow: t.Inflow,
                 Outflow: t.Outflow,

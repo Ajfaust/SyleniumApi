@@ -14,7 +14,7 @@ public class UpdateLedgerTests(IntegrationTestFactory factory) : IClassFixture<I
     [Fact]
     public async Task When_Ledger_Exists_Should_Update_Ledger()
     {
-        var command = new UpdateLedgerCommand(DefaultTestValues.Id, "New Name");
+        var command = new UpdateLedgerCommand(DefaultTestValues.Id, "New Name", false);
 
         var response = await _client.PutAsJsonAsync($"api/ledgers/{DefaultTestValues.Id}", command);
 
@@ -31,7 +31,7 @@ public class UpdateLedgerTests(IntegrationTestFactory factory) : IClassFixture<I
     [Fact]
     public async Task When_Update_Invalid_Should_Return_Bad_Request()
     {
-        var command = new UpdateLedgerCommand(DefaultTestValues.Id, new string('a', 300));
+        var command = new UpdateLedgerCommand(DefaultTestValues.Id, new string('a', 300), false);
 
         var response = await _client.PutAsJsonAsync($"api/ledgers/{DefaultTestValues.Id}", command);
 
@@ -41,7 +41,7 @@ public class UpdateLedgerTests(IntegrationTestFactory factory) : IClassFixture<I
     [Fact]
     public async Task When_Ledger_Not_Exists_Should_Return_Not_Found()
     {
-        var command = new UpdateLedgerCommand(2, "New Name");
+        var command = new UpdateLedgerCommand(2, "New Name", false);
 
         var response = await _client.PutAsJsonAsync("api/ledgers/2", command);
 

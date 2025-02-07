@@ -30,7 +30,7 @@ public class GetLegerAccountsTests(IntegrationTestFactory factory) : IClassFixtu
         await _context.SaveChangesAsync();
 
         // Act
-        var response = await _client.GetAsync($"/api/ledgers/{DefaultTestValues.Id}/accounts");
+        var response = await _client.GetAsync($"/api/ledgers/{DefaultTestValues.Id}/financial-accounts");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -47,7 +47,7 @@ public class GetLegerAccountsTests(IntegrationTestFactory factory) : IClassFixtu
     {
         // Arrange
         // Act
-        var response = await _client.GetAsync("/api/ledgers/2/accounts");
+        var response = await _client.GetAsync("/api/ledgers/2/financial-accounts");
 
         //Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

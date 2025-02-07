@@ -16,6 +16,8 @@ public class Ledger
 
     public DateTime CreatedDate { get; set; }
 
+    public bool IsActive { get; set; }
+
     #region Financial Account Category Relation
 
     public virtual ICollection<FinancialAccountCategory> FinancialAccountCategories { get; set; } =
@@ -50,6 +52,8 @@ public class LedgerConfiguration : IEntityTypeConfiguration<Ledger>
         builder.ToTable("Ledger");
 
         builder.HasKey(l => l.Id);
-        builder.HasIndex(l => l.Id);
+        builder.HasIndex(l => l.IsActive)
+            .IsUnique()
+            .HasFilter("\"IsActive\" = true");
     }
 }
