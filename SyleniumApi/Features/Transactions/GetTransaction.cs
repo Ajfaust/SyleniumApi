@@ -2,6 +2,9 @@ using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 using SyleniumApi.Data.Entities;
 using SyleniumApi.DbContexts;
+using SyleniumApi.Features.FinancialAccounts;
+using SyleniumApi.Features.TransactionCategories;
+using SyleniumApi.Features.Vendors;
 using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.Transactions;
@@ -10,9 +13,9 @@ public record GetTransactionRequest(int Id);
 
 public record GetTransactionResponse(
     int Id,
-    string AccountName,
-    string CategoryName,
-    string VendorName,
+    GetFinancialAccountResponse Account,
+    GetTransactionCategoryResponse Category,
+    GetVendorResponse Vendor,
     DateTime Date,
     string Description,
     decimal Inflow,
@@ -20,26 +23,8 @@ public record GetTransactionResponse(
     bool Cleared
 );
 
-public class GetTransactionMapper : Mapper<GetTransactionRequest, GetTransactionResponse, Transaction>
-{
-    public override Task<GetTransactionResponse> FromEntityAsync(Transaction e, CancellationToken ct = default)
-    {
-        return Task.FromResult(new GetTransactionResponse(
-            e.Id,
-            e.FinancialAccount?.Name ?? string.Empty,
-            e.TransactionCategory?.Name ?? string.Empty,
-            e.Vendor?.Name ?? string.Empty,
-            e.Date,
-            e.Description ?? string.Empty,
-            e.Inflow,
-            e.Outflow,
-            e.Cleared
-        ));
-    }
-}
-
 public class GetTransactionEndpoint(SyleniumDbContext context, ILogger logger)
-    : Endpoint<GetTransactionRequest, GetTransactionResponse, GetTransactionMapper>
+    : Endpoint<GetTransactionRequest, GetTransactionResponse>
 {
     public override void Configure()
     {
@@ -62,6 +47,6 @@ public class GetTransactionEndpoint(SyleniumDbContext context, ILogger logger)
             return;
         }
 
-        await SendMappedAsync(transaction, ct: ct);
+        await SendAsync(transaction.ToGetResponse(), cancellation: ct);
     }
 }

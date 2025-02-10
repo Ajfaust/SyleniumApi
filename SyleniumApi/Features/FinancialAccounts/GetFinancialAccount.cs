@@ -16,7 +16,7 @@ public record GetFinancialAccountResponse(
     List<GetTransactionResponse>? Transactions);
 
 public class GetFinancialAccountEndpoint(SyleniumDbContext context, ILogger logger)
-    : Endpoint<GetFinancialAccountQuery, GetFinancialAccountResponse, GetTransactionMapper>
+    : Endpoint<GetFinancialAccountQuery, GetFinancialAccountResponse>
 {
     public override void Configure()
     {
@@ -39,24 +39,8 @@ public class GetFinancialAccountEndpoint(SyleniumDbContext context, ILogger logg
             return;
         }
 
-        var categoryResponse =
-            new GetFaCategoryResponse(fa.FinancialAccountCategoryId, fa.FinancialAccountCategory!.Name,
-                fa.FinancialAccountCategory!.Type);
-        var transactions = fa.Transactions
-            .Select(t => new GetTransactionResponse(
-                t.Id,
-                Date: t.Date,
-                AccountName: t.FinancialAccount?.Name ?? string.Empty,
-                CategoryName: t.TransactionCategory?.Name ?? string.Empty,
-                VendorName: t.Vendor?.Name ?? string.Empty,
-                Description: t.Description ?? string.Empty,
-                Inflow: t.Inflow,
-                Outflow: t.Outflow,
-                Cleared: t.Cleared
-            ))
-            .ToList();
+        var response = fa.ToGetResponse();
 
-        var response = new GetFinancialAccountResponse(fa.Id, fa.Name, categoryResponse, transactions);
-        await SendAsync(response);
+        await SendAsync(response, cancellation: ct);
     }
 }
