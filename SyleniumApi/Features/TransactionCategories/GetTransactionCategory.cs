@@ -40,7 +40,7 @@ public class GetTransactionCategoryEndpoint(SyleniumDbContext context, ILogger l
     }
 }
 
-public static class TransactionCategoryMappers
+public static partial class TransactionCategoryMappers
 {
     public static GetTransactionCategoryResponse ToGetResponse(this TransactionCategory category)
     {

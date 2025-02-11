@@ -7,31 +7,13 @@ using ILogger = Serilog.ILogger;
 
 namespace SyleniumApi.Features.TransactionCategories;
 
-public record CreateTransactionCategoryCommand(int LedgerId, int? ParentId, string Name);
+public record CreateTransactionCategoryCommand(
+    int LedgerId,
+    int? ParentId,
+    string Name,
+    List<CreateTransactionCategoryCommand>? Subcategories);
 
 public record CreateTransactionCategoryResponse(int Id, int? ParentId, string Name);
-
-public class CreateTransactionCategoryMapper : Mapper<CreateTransactionCategoryCommand,
-    CreateTransactionCategoryResponse, TransactionCategory>
-{
-    public override Task<TransactionCategory> ToEntityAsync(CreateTransactionCategoryCommand cmd,
-        CancellationToken ct = default)
-    {
-        return Task.FromResult(new TransactionCategory
-        {
-            LedgerId = cmd.LedgerId,
-            ParentCategoryId = cmd.ParentId,
-            Name = cmd.Name
-        });
-    }
-
-    public override Task<CreateTransactionCategoryResponse> FromEntityAsync(TransactionCategory e,
-        CancellationToken ct = default)
-    {
-        return Task.FromResult(new CreateTransactionCategoryResponse(e.Id, e.ParentCategoryId,
-            e.Name));
-    }
-}
 
 public class CreateTransactionCategoryValidator : Validator<CreateTransactionCategoryCommand>
 {
@@ -42,7 +24,7 @@ public class CreateTransactionCategoryValidator : Validator<CreateTransactionCat
 }
 
 public class CreateTransactionCategoryEndpoint(SyleniumDbContext context, ILogger logger)
-    : Endpoint<CreateTransactionCategoryCommand, CreateTransactionCategoryResponse, CreateTransactionCategoryMapper>
+    : Endpoint<CreateTransactionCategoryCommand, CreateTransactionCategoryResponse>
 {
     public override void Configure()
     {
@@ -57,10 +39,43 @@ public class CreateTransactionCategoryEndpoint(SyleniumDbContext context, ILogge
 
     public override async Task HandleAsync(CreateTransactionCategoryCommand cmd, CancellationToken ct)
     {
-        var category = await Map.ToEntityAsync(cmd, ct);
+        var category = cmd.ToEntity();
         await context.TransactionCategories.AddAsync(category, ct);
-        await context.SaveChangesAsync(ct);
+        await context.SaveChangesAsync(true, ct);
 
-        await SendMappedAsync(category, StatusCodes.Status201Created, ct);
+        // Create subcategories if necessary, using the newly created category as parent
+        if (cmd.Subcategories is { Count: > 0 })
+        {
+            var subCats = cmd.Subcategories.Select(c =>
+            {
+                var subCat = c.ToEntity();
+                subCat.ParentCategoryId = category.Id;
+
+                return subCat;
+            }).ToList();
+
+            await context.AddRangeAsync(subCats, ct);
+            await context.SaveChangesAsync(ct);
+        }
+
+        await SendAsync(category.ToCreateResponse(), StatusCodes.Status201Created, ct);
+    }
+}
+
+public static partial class TransactionCategoryMappers
+{
+    public static TransactionCategory ToEntity(this CreateTransactionCategoryCommand cmd)
+    {
+        return new TransactionCategory
+        {
+            LedgerId = cmd.LedgerId,
+            ParentCategoryId = cmd.ParentId,
+            Name = cmd.Name
+        };
+    }
+
+    public static CreateTransactionCategoryResponse ToCreateResponse(this TransactionCategory category)
+    {
+        return new CreateTransactionCategoryResponse(category.Id, category.ParentCategoryId, category.Name);
     }
 }

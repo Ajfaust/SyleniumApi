@@ -33,6 +33,7 @@ public class GetLedgerTransactionCategoriesEndpoint(SyleniumDbContext context, I
 
         var categories = context.TransactionCategories
             .Where(c => c.LedgerId == req.Id && c.ParentCategoryId == null)
+            .Include(c => c.SubCategories)
             .Select(c => c.ToGetResponse())
             .ToList();
 
